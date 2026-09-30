@@ -36,6 +36,14 @@ const TABS = [
       "Convert CSV or TSV data to a clean JSON array instantly. Handles quoted fields, headers and type detection. Runs 100% offline in your browser — no uploads.",
   },
   {
+    id: "json-diff",
+    icon: "🔍",
+    label: "JSON Diff Checker",
+    title: "JSON Diff Checker — Compare Two JSON Files Side by Side",
+    description:
+      "Compare two JSON documents and see every added, removed and changed key in a color-coded structural diff. Validates syntax and runs 100% in your browser.",
+  },
+  {
     id: "privacy",
     icon: "🛡️",
     label: "Privacy Policy & Terms",
@@ -1475,6 +1483,487 @@ function CsvToJson({ notify }) {
 }
 
 /* ==========================================================================
+   Tool 3 — JSON Diff Checker
+   ========================================================================== */
+const DIFF_RED = "#ef4444";
+const DIFF_GREEN = "#22c55e";
+const MAX_DIFF_LINES = 5000; // rendering cap; the summary still counts every change
+const ARRAY_LCS_LIMIT = 4_000_000; // max cells in the array-alignment table before falling back to positional matching
+
+const SAMPLE_A = `{
+  "name": "dev-toolbox",
+  "version": "1.2.0",
+  "private": true,
+  "author": { "name": "Ada", "email": "ada@example.com" },
+  "features": ["cron", "csv-json"],
+  "limits": { "maxRows": 10000, "timeoutMs": 3000 },
+  "deprecated": "use v2 endpoints"
+}`;
+const SAMPLE_B = `{
+  "name": "dev-toolbox",
+  "version": "1.3.0",
+  "private": true,
+  "author": { "name": "Ada", "email": "ada@devstudio.io" },
+  "features": ["cron", "csv-json", "json-diff"],
+  "limits": { "maxRows": 50000, "timeoutMs": 3000, "retries": 2 },
+  "license": "MIT"
+}`;
+
+const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+const containerKind = (v) => (Array.isArray(v) ? "array" : isPlainObject(v) ? "object" : null);
+
+/** Key-order-independent serialization, used to test array elements for deep equality. */
+function canonical(v) {
+  if (Array.isArray(v)) return `[${v.map(canonical).join(",")}]`;
+  if (isPlainObject(v)) {
+    return `{${Object.keys(v)
+      .sort()
+      .map((k) => `${JSON.stringify(k)}:${canonical(v[k])}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(v);
+}
+
+/**
+ * Aligns two arrays with a longest-common-subsequence pass so an insertion near the
+ * start shows up as one "+" line instead of shifting every following element.
+ * Returns ops: ["eq", i, j] | ["del", i] | ["add", j].
+ */
+function alignArrays(a, b) {
+  const ha = a.map(canonical);
+  const hb = b.map(canonical);
+  let start = 0;
+  while (start < a.length && start < b.length && ha[start] === hb[start]) start++;
+  let endA = a.length;
+  let endB = b.length;
+  while (endA > start && endB > start && ha[endA - 1] === hb[endB - 1]) {
+    endA--;
+    endB--;
+  }
+
+  const ops = [];
+  for (let i = 0; i < start; i++) ops.push(["eq", i, i]);
+
+  const n = endA - start;
+  const m = endB - start;
+  if (n > 0 && m > 0 && n * m <= ARRAY_LCS_LIMIT) {
+    const w = m + 1;
+    const t = new Uint32Array((n + 1) * w);
+    for (let i = n - 1; i >= 0; i--) {
+      for (let j = m - 1; j >= 0; j--) {
+        t[i * w + j] =
+          ha[start + i] === hb[start + j]
+            ? t[(i + 1) * w + j + 1] + 1
+            : Math.max(t[(i + 1) * w + j], t[i * w + j + 1]);
+      }
+    }
+    let i = 0;
+    let j = 0;
+    while (i < n && j < m) {
+      if (ha[start + i] === hb[start + j]) {
+        ops.push(["eq", start + i++, start + j++]);
+      } else if (t[(i + 1) * w + j] >= t[i * w + j + 1]) {
+        ops.push(["del", start + i++]);
+      } else {
+        ops.push(["add", start + j++]);
+      }
+    }
+    while (i < n) ops.push(["del", start + i++]);
+    while (j < m) ops.push(["add", start + j++]);
+  } else {
+    // Too large for the table (or one side empty): treat the middle as one changed block.
+    for (let i = 0; i < n; i++) ops.push(["del", start + i]);
+    for (let j = 0; j < m; j++) ops.push(["add", start + j]);
+  }
+
+  for (let k = 0; k < a.length - endA; k++) ops.push(["eq", endA + k, endB + k]);
+  return ops;
+}
+
+/** Pushes a whole value as pretty-printed lines of one type ("same" | "add" | "del"). */
+function emitValue(out, type, value, prefix, indent, comma) {
+  const rows = JSON.stringify(value, null, 2).split("\n");
+  const lead = "  ".repeat(indent);
+  rows.forEach((row, i) => {
+    const text = (i === 0 ? prefix : "") + row + (i === rows.length - 1 && comma ? "," : "");
+    out.push({ type, text: lead + text });
+  });
+}
+
+/**
+ * Recursive structural diff. Objects are matched by key (key order is ignored),
+ * arrays by LCS alignment. Output mirrors a pretty-printed merge of A and B,
+ * with commas computed per side so each side's lines stay valid JSON.
+ */
+function diffNode(a, b, key, indent, commaA, commaB, out, stats) {
+  const prefix = key === null ? "" : `${JSON.stringify(key)}: `;
+  const lead = "  ".repeat(indent);
+  const kind = containerKind(a);
+
+  if (kind && kind === containerKind(b) && canonical(a) !== canonical(b)) {
+    const [open, close] = kind === "array" ? ["[", "]"] : ["{", "}"];
+    out.push({ type: "same", text: `${lead}${prefix}${open}` });
+
+    if (kind === "object") {
+      const keysA = Object.keys(a);
+      const keysB = Object.keys(b);
+      const lastA = keysA[keysA.length - 1];
+      const lastB = keysB[keysB.length - 1];
+      const union = [...keysA, ...keysB.filter((k) => !Object.hasOwn(a, k))];
+      for (const k of union) {
+        const inA = Object.hasOwn(a, k);
+        const inB = Object.hasOwn(b, k);
+        if (inA && inB) {
+          diffNode(a[k], b[k], k, indent + 1, k !== lastA, k !== lastB, out, stats);
+        } else if (inA) {
+          stats.removed++;
+          emitValue(out, "del", a[k], `${JSON.stringify(k)}: `, indent + 1, k !== lastA);
+        } else {
+          stats.added++;
+          emitValue(out, "add", b[k], `${JSON.stringify(k)}: `, indent + 1, k !== lastB);
+        }
+      }
+    } else {
+      const ops = alignArrays(a, b);
+      let dels = [];
+      let adds = [];
+      const flush = () => {
+        for (const i of dels) {
+          stats.removed++;
+          emitValue(out, "del", a[i], "", indent + 1, i < a.length - 1);
+        }
+        for (const j of adds) {
+          stats.added++;
+          emitValue(out, "add", b[j], "", indent + 1, j < b.length - 1);
+        }
+        dels = [];
+        adds = [];
+      };
+      const flushHunk = (hunkDels, hunkAdds) => {
+        // Pair same-kind containers positionally so a modified object inside an
+        // array shows its inner changes rather than a full remove + re-add.
+        const pairs = Math.min(hunkDels.length, hunkAdds.length);
+        for (let p = 0; p < Math.max(hunkDels.length, hunkAdds.length); p++) {
+          const i = hunkDels[p];
+          const j = hunkAdds[p];
+          if (p < pairs && containerKind(a[i]) && containerKind(a[i]) === containerKind(b[j])) {
+            flush();
+            diffNode(a[i], b[j], null, indent + 1, i < a.length - 1, j < b.length - 1, out, stats);
+          } else {
+            if (i !== undefined) dels.push(i);
+            if (j !== undefined) adds.push(j);
+          }
+        }
+        flush();
+      };
+
+      let hunkDels = [];
+      let hunkAdds = [];
+      for (const [op, x, y] of ops) {
+        if (op === "eq") {
+          flushHunk(hunkDels, hunkAdds);
+          hunkDels = [];
+          hunkAdds = [];
+          emitValue(out, "same", b[y], "", indent + 1, y < b.length - 1);
+        } else if (op === "del") {
+          hunkDels.push(x);
+        } else {
+          hunkAdds.push(x);
+        }
+      }
+      flushHunk(hunkDels, hunkAdds);
+    }
+
+    out.push({ type: "same", text: `${lead}${close}${commaB ? "," : ""}` });
+    return;
+  }
+
+  if (canonical(a) === canonical(b)) {
+    emitValue(out, "same", b, prefix, indent, commaB);
+    return;
+  }
+
+  // Different primitive values, or the type changed (e.g. object -> array).
+  stats.changed++;
+  emitValue(out, "del", a, prefix, indent, commaA);
+  emitValue(out, "add", b, prefix, indent, commaB);
+}
+
+/** Appends A/B line numbers the way a unified diff gutter shows them. */
+function numberLines(lines) {
+  let aNo = 0;
+  let bNo = 0;
+  for (const l of lines) {
+    if (l.type !== "add") l.aNo = ++aNo;
+    if (l.type !== "del") l.bNo = ++bNo;
+  }
+  return lines;
+}
+
+function describeJsonError(err, text) {
+  const msg = err.message;
+  // Firefox and newer Chrome already include line/column; older V8 only gives a character position.
+  const m = /position (\d+)/.exec(msg);
+  if (!m || /line \d+/.test(msg)) return msg;
+  const before = text.slice(0, Number(m[1])).split("\n");
+  return `${msg} (line ${before.length}, column ${before[before.length - 1].length + 1})`;
+}
+
+function parsePanel(text, panel) {
+  if (!text.trim()) return { error: `Panel ${panel} is empty — paste a JSON document to compare.` };
+  try {
+    // JSON.parse is a pure data parser (no code execution), so untrusted input is safe here.
+    return { value: JSON.parse(text) };
+  } catch (err) {
+    return { error: `Invalid JSON format syntax detected in Panel ${panel}: ${describeJsonError(err, text)}` };
+  }
+}
+
+function compareJson(textA, textB) {
+  const pa = parsePanel(textA, "A");
+  const pb = parsePanel(textB, "B");
+  if (pa.error || pb.error) return { errors: { A: pa.error, B: pb.error } };
+
+  const stats = { added: 0, removed: 0, changed: 0 };
+  const lines = [];
+  try {
+    diffNode(pa.value, pb.value, null, 0, false, false, lines, stats);
+  } catch (err) {
+    if (err instanceof RangeError) {
+      return { errors: { A: "These documents are nested too deeply to compare in the browser." } };
+    }
+    throw err;
+  }
+  return { lines: numberLines(lines), stats, identical: stats.added + stats.removed + stats.changed === 0 };
+}
+
+function JsonDiffChecker({ notify }) {
+  const [left, setLeft] = useState("");
+  const [right, setRight] = useState("");
+  const [result, setResult] = useState(null);
+  const [compared, setCompared] = useState(null);
+  const outputRef = useRef(null);
+
+  const stale = result && compared && (compared.a !== left || compared.b !== right);
+  const errors = result?.errors;
+
+  const handleCompare = () => {
+    setResult(compareJson(left, right));
+    setCompared({ a: left, b: right });
+  };
+
+  // Bring the banner or diff into view after each comparison.
+  useEffect(() => {
+    if (result) outputRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [result]);
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      handleCompare();
+    }
+  };
+
+  const handleFormat = () => {
+    let failed = false;
+    const format = (text, setter) => {
+      if (!text.trim()) return;
+      try {
+        setter(JSON.stringify(JSON.parse(text), null, 2));
+      } catch {
+        failed = true;
+      }
+    };
+    format(left, setLeft);
+    format(right, setRight);
+    if (failed) notify("Couldn't format — fix the JSON syntax first", "error");
+  };
+
+  const handleClear = () => {
+    setLeft("");
+    setRight("");
+    setResult(null);
+    setCompared(null);
+  };
+
+  const inputStyle = (hasError) => ({
+    width: "100%",
+    height: 320,
+    resize: "vertical",
+    padding: 16,
+    borderRadius: 8,
+    background: C.bg,
+    border: `1px solid ${hasError ? DIFF_RED : C.borderHi}`,
+    boxShadow: hasError ? `0 0 0 3px ${tint(DIFF_RED, 20)}` : "none",
+    color: C.textSoft,
+    fontFamily: MONO,
+    fontSize: 13,
+    lineHeight: 1.55,
+    outline: "none",
+    whiteSpace: "pre",
+    overflowWrap: "normal",
+    overflow: "auto",
+  });
+
+  const smallBtn = { ...S.btn("ghost"), padding: "5px 10px", fontSize: 12 };
+  const shownLines = result?.lines ? result.lines.slice(0, MAX_DIFF_LINES) : [];
+  const rowBg = { add: tint(DIFF_GREEN, 14), del: tint(DIFF_RED, 14), same: "transparent" };
+  const signColor = { add: DIFF_GREEN, del: DIFF_RED, same: C.faint };
+  const sign = { add: "+", del: "-", same: " " };
+
+  return (
+    <section aria-labelledby="diff-title">
+      <h1 id="diff-title" style={S.h1}>JSON Diff Checker</h1>
+      <p style={S.lead}>
+        Paste two JSON documents to see every added, removed and changed key in a structural diff. Key order is
+        ignored; everything runs locally in your browser.
+      </p>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
+        {[
+          { id: "json-a", label: "Original JSON (A)", value: left, set: setLeft, error: errors?.A },
+          { id: "json-b", label: "Modified JSON (B)", value: right, set: setRight, error: errors?.B },
+        ].map((p) => (
+          <div key={p.id} style={{ ...S.card, minWidth: 0 }}>
+            <label htmlFor={p.id} style={{ ...S.label, color: p.error ? DIFF_RED : C.muted }}>
+              {p.label}
+            </label>
+            <textarea
+              id={p.id}
+              value={p.value}
+              onChange={(e) => p.set(e.target.value)}
+              onKeyDown={handleKeyDown}
+              spellCheck={false}
+              aria-invalid={Boolean(p.error)}
+              placeholder={'{\n  "key": "value"\n}'}
+              style={inputStyle(Boolean(p.error))}
+            />
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, marginTop: 20 }}>
+        <button type="button" className="btn-primary" style={{ ...S.btn("primary"), padding: "12px 22px", fontSize: 15 }} onClick={handleCompare}>
+          🔍 Compare JSON Files
+        </button>
+        <button type="button" className="btn-ghost" style={smallBtn} onClick={() => { setLeft(SAMPLE_A); setRight(SAMPLE_B); }}>
+          Load sample
+        </button>
+        <button type="button" className="btn-ghost" style={smallBtn} onClick={() => { setLeft(right); setRight(left); }} disabled={!left && !right}>
+          Swap A ⇄ B
+        </button>
+        <button type="button" className="btn-ghost" style={smallBtn} onClick={handleFormat} disabled={!left && !right}>
+          Format both
+        </button>
+        <button type="button" className="btn-ghost" style={smallBtn} onClick={handleClear} disabled={!left && !right && !result}>
+          Clear
+        </button>
+        <span style={{ fontSize: 12, color: C.faint, marginLeft: "auto" }}>Tip: Ctrl + Enter compares</span>
+      </div>
+
+      <div ref={outputRef} style={{ marginTop: 20, scrollMarginTop: 20 }}>
+        {errors && (
+          <div
+            role="alert"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 6,
+              padding: "14px 18px",
+              borderRadius: 10,
+              border: `1px solid ${DIFF_RED}`,
+              borderLeft: `4px solid ${DIFF_RED}`,
+              background: tint(DIFF_RED, 12),
+              color: C.text,
+              fontSize: 14,
+            }}
+          >
+            {[errors.A, errors.B].filter(Boolean).map((msg) => (
+              <div key={msg} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                <span aria-hidden="true" style={{ color: DIFF_RED, fontWeight: 700 }}>⛔</span>
+                <span style={{ fontWeight: 500, overflowWrap: "anywhere" }}>{msg}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {result?.lines && (
+          <div style={{ ...S.card, minWidth: 0 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
+              <span style={{ ...S.label, marginBottom: 0 }}>Diff output</span>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, fontFamily: MONO, fontSize: 12, fontWeight: 600 }}>
+                {stale && <span style={{ color: C.amber }}>inputs changed — compare again</span>}
+                {result.identical ? (
+                  <span style={{ color: DIFF_GREEN }}>✓ No differences — documents are identical</span>
+                ) : (
+                  <>
+                    <span style={{ padding: "2px 8px", borderRadius: 6, background: tint(DIFF_GREEN, 14), color: DIFF_GREEN }}>+{result.stats.added} added</span>
+                    <span style={{ padding: "2px 8px", borderRadius: 6, background: tint(DIFF_RED, 14), color: DIFF_RED }}>-{result.stats.removed} removed</span>
+                    <span style={{ padding: "2px 8px", borderRadius: 6, background: tint(C.amber, 14), color: C.amber }}>~{result.stats.changed} changed</span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Rows are width: max-content so long lines scroll horizontally inside this box instead of wrapping or widening the page. */}
+            <div
+              role="region"
+              aria-label="JSON diff output"
+              tabIndex={0}
+              style={{
+                maxHeight: 560,
+                overflow: "auto",
+                borderRadius: 8,
+                background: C.bg,
+                border: `1px solid ${C.borderHi}`,
+                fontFamily: `${MONO}, monospace`,
+                fontSize: 13,
+                lineHeight: 1.6,
+                opacity: stale ? 0.65 : 1,
+                transition: "opacity 0.15s",
+              }}
+            >
+              <div style={{ width: "max-content", minWidth: "100%", padding: "8px 0" }}>
+                {shownLines.map((l, i) => (
+                  <div key={i} style={{ display: "flex", background: rowBg[l.type] }}>
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        position: "sticky",
+                        left: 0,
+                        display: "flex",
+                        flexShrink: 0,
+                        background: C.panel,
+                        borderRight: `1px solid ${C.border}`,
+                        color: C.faint,
+                        userSelect: "none",
+                      }}
+                    >
+                      <span style={{ width: 44, textAlign: "right", paddingRight: 8 }}>{l.aNo ?? ""}</span>
+                      <span style={{ width: 44, textAlign: "right", paddingRight: 8 }}>{l.bNo ?? ""}</span>
+                    </span>
+                    <span style={{ width: 24, flexShrink: 0, textAlign: "center", color: signColor[l.type], fontWeight: 700, userSelect: "none" }}>
+                      {sign[l.type]}
+                    </span>
+                    <span style={{ whiteSpace: "pre", paddingRight: 16, color: l.type === "same" ? C.muted : C.text }}>{l.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {result.lines.length > MAX_DIFF_LINES && (
+              <p style={{ margin: "10px 0 0", fontSize: 12.5, color: C.amber }}>
+                ⚠ Showing the first {MAX_DIFF_LINES.toLocaleString()} of {result.lines.length.toLocaleString()} lines. The change counts above cover the whole document.
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/* ==========================================================================
    Privacy Policy & Terms of Use
    ========================================================================== */
 function PolicySection({ title, children }) {
@@ -1548,8 +2037,8 @@ function PrivacyTerms() {
           <strong style={{ color: C.green }}>
             Your tool data never leaves your browser.
           </strong>{" "}
-          Every utility on {SITE_NAME} — including the Cron Scheduler and the
-          CSV to JSON Converter — runs entirely client-side in JavaScript. The
+          Every utility on {SITE_NAME} — including the Cron Scheduler, the CSV to
+          JSON Converter and the JSON Diff Checker — runs entirely client-side in JavaScript. The
           text, files and settings you enter are processed locally on your
           device and are never uploaded, transmitted, logged or stored on our
           servers.
@@ -2070,6 +2559,9 @@ export default function App() {
           </div>
           <div hidden={activeTab !== "csv-json"}>
             <CsvToJson notify={notify} />
+          </div>
+          <div hidden={activeTab !== "json-diff"}>
+            <JsonDiffChecker notify={notify} />
           </div>
           <div hidden={activeTab !== "privacy"}>
             <PrivacyTerms />
