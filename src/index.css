@@ -1,0 +1,167 @@
+/* Base layer only — component styling lives inline in App.jsx.
+   This file holds what inline styles can't express: theme tokens, resets,
+   pseudo-classes, scrollbars and the responsive breakpoint. */
+
+/* Theme tokens. Dark is the default; <html data-theme="light"> swaps the palette.
+   App.jsx references these through its C object (e.g. C.blue -> var(--blue)). */
+:root {
+  color-scheme: dark;
+  --bg: #09090b;
+  --panel: #18181b;
+  --panel-hi: #202024;
+  --border: #27272a;
+  --border-hi: #3f3f46;
+  --text: #f4f4f5;
+  --text-soft: #e4e4e7;
+  --muted: #a1a1aa;
+  --faint: #71717a;
+  --blue: #38bdf8;
+  --blue-hover: #7dd3fc;
+  --green: #4ade80;
+  --green-hover: #86efac;
+  --amber: #fbbf24;
+  --violet: #c084fc;
+  --red: #f87171;
+  --on-blue: #082f49;
+  --on-green: #052e16;
+}
+
+/* Accents are darkened for light mode so text and buttons keep WCAG AA contrast on white. */
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #fafafa;
+  --panel: #ffffff;
+  --panel-hi: #f4f4f5;
+  --border: #e4e4e7;
+  --border-hi: #d4d4d8;
+  --text: #09090b;
+  --text-soft: #27272a;
+  --muted: #52525b;
+  --faint: #71717a;
+  --blue: #0369a1;
+  --blue-hover: #075985;
+  --green: #15803d;
+  --green-hover: #166534;
+  --amber: #b45309;
+  --violet: #7c3aed;
+  --red: #dc2626;
+  --on-blue: #ffffff;
+  --on-green: #ffffff;
+}
+
+:root {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-soft);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+}
+button:not(:disabled):active {
+  transform: translateY(1px);
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed !important;
+}
+
+:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.nav-btn:hover {
+  background: var(--panel-hi) !important;
+  color: var(--text) !important;
+}
+.btn-primary:not(:disabled):hover {
+  background: var(--blue-hover) !important;
+}
+.btn-success:not(:disabled):hover {
+  background: var(--green-hover) !important;
+}
+.btn-ghost:not(:disabled):hover {
+  border-color: var(--faint) !important;
+  color: var(--text) !important;
+}
+.sponsor-card:hover {
+  border-color: var(--blue) !important;
+}
+
+select:hover,
+textarea:hover {
+  border-color: var(--faint) !important;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--blue) 35%, transparent);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-hi);
+}
+
+/* Below 900px the fixed sidebar becomes a top bar so the workspace keeps its width. */
+@media (max-width: 900px) {
+  .app-sidebar {
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--border) !important;
+  }
+  .app-sidebar nav {
+    flex-direction: row !important;
+    flex-wrap: wrap;
+  }
+  .app-sidebar .nav-btn {
+    width: auto !important;
+  }
+  .app-sidebar .sidebar-ad {
+    display: none !important;
+  }
+  .app-main {
+    margin-left: 0 !important;
+    padding: 20px 16px 0 !important;
+    /* The sidebar stacks above main here, so a full-viewport min-height would only add dead space. */
+    min-height: auto !important;
+  }
+  .app-footer {
+    margin: 0 -16px !important;
+    padding: 16px !important;
+  }
+}
