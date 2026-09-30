@@ -44,6 +44,22 @@ const TABS = [
       "Compare two JSON documents and see every added, removed and changed key in a color-coded structural diff. Validates syntax and runs 100% in your browser.",
   },
   {
+    id: "code-beautifier",
+    icon: "💅",
+    label: "Code Formatter",
+    title: "Code Beautifier — Format Minified HTML, CSS & JavaScript Online",
+    description:
+      "Beautify minified or messy HTML, CSS and JavaScript with clean, consistent indentation. Free, instant and 100% in your browser — your code is never uploaded.",
+  },
+  {
+    id: "string-escape",
+    icon: "🔤",
+    label: "String to JSON Converter",
+    title: "JSON String Escape & Unescape — Convert Text to a JSON-Safe String",
+    description:
+      "Escape multi-line text, HTML or logs into a single-line JSON-safe string, or unescape \\n, \\t, \\\" and \\uXXXX sequences back to raw text. Runs entirely in your browser.",
+  },
+  {
     id: "privacy",
     icon: "🛡️",
     label: "Privacy Policy & Terms",
@@ -1964,6 +1980,970 @@ function JsonDiffChecker({ notify }) {
 }
 
 /* ==========================================================================
+   Tool 4 — Code Beautifier (HTML / CSS / JavaScript)
+   Small hand-written lexers rather than naive splitting on ; { } < > — those
+   characters also appear inside strings, comments, url() values, template
+   literals and regexes, where splitting would corrupt the code.
+   ========================================================================== */
+const INDENT_UNITS = { 2: "  ", 4: "    ", tab: "\t" };
+
+/** Returns the index just past a quoted string starting at `i` (stops at an unescaped newline). */
+function skipQuoted(src, i) {
+  const q = src[i];
+  for (let j = i + 1; j < src.length; j++) {
+    if (src[j] === "\\") j++;
+    else if (src[j] === q) return j + 1;
+    else if (src[j] === "\n") return j;
+  }
+  return src.length;
+}
+
+/* ---------- CSS ---------- */
+function collapseCss(s) {
+  let out = "";
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (c === '"' || c === "'") {
+      const e = skipQuoted(s, i);
+      out += s.slice(i, e);
+      i = e - 1;
+    } else if (/\s/.test(c)) {
+      if (out && !out.endsWith(" ")) out += " ";
+    } else {
+      out += c;
+    }
+  }
+  return out.trim();
+}
+
+function tidySelector(raw, lead) {
+  const s = collapseCss(raw);
+  if (s.startsWith("@")) return s.replace(/\(\s*([\w-]+)\s*:\s*/g, "($1: ");
+  const parts = [];
+  let cur = "";
+  let depth = 0;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (c === '"' || c === "'") {
+      const e = skipQuoted(s, i);
+      cur += s.slice(i, e);
+      i = e - 1;
+      continue;
+    }
+    if (c === "(" || c === "[") depth++;
+    else if (c === ")" || c === "]") depth--;
+    if (depth === 0 && c === ",") {
+      parts.push(cur.trim());
+      cur = "";
+    } else if (depth === 0 && (c === ">" || c === "+" || c === "~") && s[i + 1] !== "=") {
+      cur = `${cur.trimEnd()} ${c} `;
+      while (s[i + 1] === " ") i++;
+    } else {
+      cur += c;
+    }
+  }
+  parts.push(cur.trim());
+  // One selector per line, like Prettier.
+  return parts.filter(Boolean).join(`,\n${lead}`);
+}
+
+function tidyDeclaration(raw) {
+  const s = collapseCss(raw);
+  if (s.startsWith("@") || s.startsWith("/*")) return s;
+  const colon = s.indexOf(":");
+  return colon < 0 ? s : `${s.slice(0, colon).trim()}: ${s.slice(colon + 1).trim()}`;
+}
+
+function formatCss(src, unit = "  ") {
+  const out = [];
+  let indent = 0;
+  let buf = "";
+  let paren = 0;
+  const lead = () => unit.repeat(indent);
+  const flush = (semicolon) => {
+    const s = tidyDeclaration(buf);
+    buf = "";
+    if (s) out.push(lead() + s + (semicolon ? ";" : ""));
+  };
+
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i];
+    if (c === "/" && src[i + 1] === "*") {
+      const e = src.indexOf("*/", i + 2);
+      const end = e < 0 ? src.length : e + 2;
+      if (buf.trim()) buf += src.slice(i, end);
+      else out.push(lead() + src.slice(i, end).trim());
+      i = end - 1;
+      continue;
+    }
+    if (c === '"' || c === "'") {
+      const e = skipQuoted(src, i);
+      buf += src.slice(i, e);
+      i = e - 1;
+      continue;
+    }
+    // Inside (...) — e.g. url(data:image/png;base64,...) — ; and { are data, not structure.
+    if (c === "(") paren++;
+    else if (c === ")") paren = Math.max(0, paren - 1);
+    if (paren > 0) {
+      buf += c;
+      continue;
+    }
+    if (c === "{") {
+      const sel = tidySelector(buf, lead());
+      buf = "";
+      out.push(lead() + (sel ? `${sel} {` : "{"));
+      indent++;
+    } else if (c === ";") {
+      flush(true);
+    } else if (c === "}") {
+      if (buf.trim()) flush(true); // add the optional final semicolon
+      indent = Math.max(0, indent - 1);
+      out.push(`${lead()}}`);
+      if (indent === 0) out.push("");
+    } else {
+      buf += c;
+    }
+  }
+  if (buf.trim()) out.push(lead() + collapseCss(buf));
+  while (out.length && out[out.length - 1] === "") out.pop();
+  return out.join("\n");
+}
+
+/* ---------- JavaScript ---------- */
+const JS_PUNCTUATORS = [">>>=", "...", "===", "!==", "**=", "<<=", ">>=", ">>>", "&&=", "||=", "??=", "=>", "==", "!=", "<=", ">=", "&&", "||", "??", "?.", "++", "--", "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", "**", "<<", ">>"];
+// Keywords after which an operand (not an operator) is expected.
+const JS_OPERAND_KEYWORDS = new Set(["return", "typeof", "instanceof", "in", "of", "new", "delete", "void", "throw", "case", "do", "else", "yield", "await", "extends"]);
+const JS_SPACE_BEFORE_PAREN = new Set([...JS_OPERAND_KEYWORDS, "if", "for", "while", "switch", "catch", "with", "function", "async"]);
+// A `{` after these words opens an object/pattern rather than a block.
+const JS_OBJECT_AFTER_WORD = new Set(["return", "default", "yield", "await", "typeof", "in", "of", "case", "const", "let", "var", "import", "export", "throw"]);
+// Words that can't end a statement, so a following line break is never an ASI boundary.
+const JS_NO_BREAK_AFTER_WORD = new Set(["else", "do", "typeof", "new", "void", "delete", "await", "const", "let", "var", "function", "class", "extends", "in", "of", "instanceof", "case", "async", "import", "export"]);
+const JS_CONTINUATION_WORDS = new Set(["else", "catch", "finally", "in", "of", "instanceof"]);
+
+function skipTemplate(src, i) {
+  for (let j = i + 1; j < src.length; j++) {
+    const c = src[j];
+    if (c === "\\") j++;
+    else if (c === "`") return j + 1;
+    else if (c === "$" && src[j + 1] === "{") j = skipBraces(src, j + 2) - 1;
+  }
+  return src.length;
+}
+
+function skipBraces(src, i) {
+  let depth = 1;
+  for (let j = i; j < src.length; j++) {
+    const c = src[j];
+    if (c === '"' || c === "'") j = skipQuoted(src, j) - 1;
+    else if (c === "`") j = skipTemplate(src, j) - 1;
+    else if (c === "{") depth++;
+    else if (c === "}" && --depth === 0) return j + 1;
+  }
+  return src.length;
+}
+
+function skipRegex(src, i) {
+  let inClass = false;
+  let j = i + 1;
+  for (; j < src.length; j++) {
+    const c = src[j];
+    if (c === "\\") j++;
+    else if (c === "\n") return j;
+    else if (inClass) inClass = c !== "]";
+    else if (c === "[") inClass = true;
+    else if (c === "/") {
+      j++;
+      break;
+    }
+  }
+  while (j < src.length && /[a-z]/i.test(src[j])) j++;
+  return j;
+}
+
+/** A `/` starts a regex literal unless the previous token could end an expression. */
+function regexAllowed(prev) {
+  if (!prev) return true;
+  if (prev.type === "word") return JS_OPERAND_KEYWORDS.has(prev.value);
+  if (prev.type !== "punct") return false;
+  return ![")", "]", "}", "++", "--"].includes(prev.value);
+}
+
+function tokenizeJs(src) {
+  const toks = [];
+  let lastSig = null;
+  let nl = 0;
+  let i = 0;
+  while (i < src.length) {
+    const ch = src[i];
+    if (/\s/.test(ch)) {
+      if (ch === "\n") nl++;
+      i++;
+      continue;
+    }
+    const start = i;
+    let type = "punct";
+    if (ch === "/" && src[i + 1] === "/") {
+      const e = src.indexOf("\n", i);
+      i = e < 0 ? src.length : e;
+      type = "linecomment";
+    } else if (ch === "/" && src[i + 1] === "*") {
+      const e = src.indexOf("*/", i + 2);
+      i = e < 0 ? src.length : e + 2;
+      type = "blockcomment";
+    } else if (ch === '"' || ch === "'") {
+      i = skipQuoted(src, i);
+      type = "string";
+    } else if (ch === "`") {
+      i = skipTemplate(src, i);
+      type = "template";
+    } else if (/[A-Za-z_$#@\u0080-\uffff]/.test(ch)) {
+      i++;
+      while (i < src.length && /[\w$\u0080-\uffff]/.test(src[i])) i++;
+      type = "word";
+    } else if (/\d/.test(ch) || (ch === "." && /\d/.test(src[i + 1]))) {
+      i++;
+      const hex = /^0[xob]/i.test(src.slice(start, start + 2));
+      while (i < src.length && (/[\w.]/.test(src[i]) || (/[+-]/.test(src[i]) && !hex && /[eE]/.test(src[i - 1])))) i++;
+      type = "number";
+    } else if (ch === "/" && regexAllowed(lastSig)) {
+      i = skipRegex(src, i);
+      type = "regex";
+    } else {
+      let p = JS_PUNCTUATORS.find((op) => src.startsWith(op, i)) ?? ch;
+      if (p === "?." && /\d/.test(src[i + 2])) p = "?"; // `a?.5:1` is a ternary, not optional chaining
+      i += p.length;
+    }
+    const tok = { type, value: src.slice(start, i), nl };
+    toks.push(tok);
+    if (type !== "linecomment" && type !== "blockcomment") lastSig = tok;
+    nl = 0;
+  }
+  return toks;
+}
+
+function jsNeedsSpace(prev, cur) {
+  if (!prev) return false;
+  const v = cur.value;
+  const p = prev.value;
+  if (cur.type === "punct" && [",", ";", ")", "]", ".", "?.", ":"].includes(v)) return false;
+  if ((prev.type === "punct" && ["(", "[", ".", "?.", "...", "!", "~"].includes(p)) || prev.unary) return false;
+  if (cur.postfix) return false;
+  const isCallee = (prev.type === "word" && !JS_OPERAND_KEYWORDS.has(p)) || p === ")" || p === "]" || prev.type === "string" || prev.type === "template";
+  if (v === "(" && cur.type === "punct") return prev.type === "word" ? JS_SPACE_BEFORE_PAREN.has(p) : !isCallee;
+  if (v === "[" && cur.type === "punct") return !isCallee;
+  if (cur.type === "template" && prev.type === "word" && !JS_OPERAND_KEYWORDS.has(p)) return false; // tagged template
+  return true;
+}
+
+function formatJs(src, unit = "  ") {
+  const toks = tokenizeJs(src);
+  const lines = [];
+  const stack = [{ kind: "block", q: 0 }];
+  const top = () => stack[stack.length - 1];
+  let line = "";
+  let lineIndent = 0;
+  let indent = 0;
+  let prev = null;
+  let lastParenOwner = null;
+
+  const write = (text, space) => {
+    if (!line) lineIndent = indent;
+    else if (space) line += " ";
+    line += text;
+  };
+  const newline = () => {
+    if (line) lines.push(unit.repeat(lineIndent) + line);
+    line = "";
+  };
+  const blankLine = () => {
+    newline();
+    const last = lines[lines.length - 1];
+    if (lines.length && last !== "" && !/[{([]$/.test(last)) lines.push("");
+  };
+  const atStatementLevel = () => top().kind === "block";
+  const endsExpression = (t) =>
+    Boolean(t) &&
+    (t.type === "word" ? !JS_NO_BREAK_AFTER_WORD.has(t.value) : t.type !== "punct" || [")", "]", "}"].includes(t.value) || t.postfix);
+  const startsStatement = (t) =>
+    t.type === "word" ? !JS_CONTINUATION_WORDS.has(t.value) : ["number", "string", "template", "regex"].includes(t.type) || t.value === "++" || t.value === "--";
+
+  const afterClose = (frame, next) => {
+    if (!next) return newline();
+    if (next.type === "punct" && [")", "]", ",", ";", ".", "?.", "("].includes(next.value)) return;
+    if (next.type === "word" && (["else", "catch", "finally"].includes(next.value) || (next.value === "while" && frame.isDo))) return;
+    if (!atStatementLevel() || next.type === "punct") return; // mid-expression: keep flowing
+    newline();
+  };
+
+  for (let k = 0; k < toks.length; k++) {
+    const t = toks[k];
+    const v = t.value;
+
+    if (t.type === "linecomment" || t.type === "blockcomment") {
+      const ownLine = t.nl > 0 || !line;
+      if (ownLine) {
+        if (t.nl > 1 && atStatementLevel()) blankLine();
+        else newline();
+      }
+      write(v, true);
+      if (t.type === "linecomment" || ownLine) newline();
+      continue;
+    }
+
+    // Keep source line breaks that may be ASI statement boundaries, plus single blank lines.
+    if (t.nl > 0 && line && atStatementLevel() && endsExpression(prev) && startsStatement(t)) newline();
+    if (t.nl > 1 && !line && atStatementLevel() && lines.length) blankLine();
+
+    if (t.type === "punct") {
+      if (v === "+" || v === "-" || v === "++" || v === "--") {
+        const operandPosition =
+          !prev ||
+          (prev.type === "punct" && ![")", "]", "}"].includes(prev.value) && !prev.postfix) ||
+          (prev.type === "word" && JS_OPERAND_KEYWORDS.has(prev.value));
+        if (v.length === 1 || operandPosition) t.unary = operandPosition;
+        else t.postfix = true;
+      } else if (v === "!" || v === "~" || v === "...") {
+        t.unary = true;
+      }
+    }
+
+    if (t.type === "punct" && v === "{") {
+      const isObject =
+        Boolean(prev) &&
+        ((prev.type === "punct" && ![")", "=>", ";", "}"].includes(prev.value)) ||
+          (prev.type === "word" && JS_OBJECT_AFTER_WORD.has(prev.value)));
+      const frame = {
+        kind: isObject ? "obj" : "block",
+        q: 0,
+        isSwitch: !isObject && prev?.value === ")" && lastParenOwner === "switch",
+        isDo: prev?.value === "do",
+      };
+      write("{", jsNeedsSpace(prev, t));
+      const next = toks[k + 1];
+      if (next?.value === "}") {
+        write("}", false);
+        k++;
+        prev = next;
+        afterClose(frame, toks[k + 1]);
+        continue;
+      }
+      stack.push(frame);
+      indent++;
+      newline();
+      prev = t;
+      continue;
+    }
+
+    if (t.type === "punct" && v === "}") {
+      newline();
+      const frame = stack.length > 1 ? stack.pop() : top();
+      if (frame.inCase) indent--;
+      indent = Math.max(0, indent - 1);
+      write("}", false);
+      prev = t;
+      afterClose(frame, toks[k + 1]);
+      continue;
+    }
+
+    if (t.type === "punct" && (v === "(" || v === "[")) {
+      write(v, jsNeedsSpace(prev, t));
+      stack.push({ kind: v === "(" ? "paren" : "bracket", q: 0, owner: prev?.type === "word" ? prev.value : null });
+      prev = t;
+      continue;
+    }
+
+    if (t.type === "punct" && (v === ")" || v === "]")) {
+      if (stack.length > 1 && (top().kind === "paren" || top().kind === "bracket")) {
+        const frame = stack.pop();
+        if (v === ")") lastParenOwner = frame.owner;
+      }
+      write(v, false);
+      prev = t;
+      continue;
+    }
+
+    if (t.type === "punct" && v === ";") {
+      write(";", false);
+      if (top().kind !== "paren") newline(); // `for (a; b; c)` headers stay on one line
+      prev = t;
+      continue;
+    }
+
+    if (t.type === "punct" && v === ",") {
+      write(",", false);
+      if (top().kind === "obj") newline();
+      prev = t;
+      continue;
+    }
+
+    if (t.type === "punct" && v === "?") {
+      top().q++;
+      write("?", true);
+      prev = t;
+      continue;
+    }
+
+    if (t.type === "punct" && v === ":") {
+      const f = top();
+      if (f.q > 0) {
+        f.q--;
+        write(":", true); // ternary
+      } else if (f.pendingCase) {
+        f.pendingCase = false;
+        write(":", false);
+        newline();
+        indent++;
+        f.inCase = true;
+      } else {
+        write(":", false); // object key or label
+      }
+      prev = t;
+      continue;
+    }
+
+    if (t.type === "word" && (v === "case" || v === "default") && top().isSwitch) {
+      const f = top();
+      newline();
+      if (f.inCase) {
+        indent--;
+        f.inCase = false;
+      }
+      f.pendingCase = true;
+      write(v, false);
+      prev = t;
+      continue;
+    }
+
+    write(v, jsNeedsSpace(prev, t));
+    prev = t;
+  }
+  newline();
+  return lines.join("\n");
+}
+
+/* ---------- HTML ---------- */
+const HTML_VOID = new Set(["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"]);
+const HTML_RAW_TEXT = new Set(["script", "style", "pre", "textarea"]);
+const HTML_PRESERVE = new Set(["pre", "textarea"]); // whitespace is significant: emit verbatim
+const HTML_INLINE_MAX = 100;
+
+function normalizeTag(raw) {
+  let out = "";
+  let q = null;
+  for (const c of raw) {
+    if (q) {
+      out += c;
+      if (c === q) q = null;
+    } else if (c === '"' || c === "'") {
+      q = c;
+      out += c;
+    } else if (/\s/.test(c)) {
+      if (!out.endsWith(" ")) out += " ";
+    } else {
+      out += c;
+    }
+  }
+  return out.replace(/^<\s+/, "<").replace(/\s+(\/?>)$/, (_, end) => (end === "/>" ? " />" : ">"));
+}
+
+function tokenizeHtml(src) {
+  const toks = [];
+  const isTagStart = (j) => src[j] === "<" && /[A-Za-z!/?]/.test(src[j + 1] ?? "");
+  let i = 0;
+  while (i < src.length) {
+    if (src.startsWith("<!--", i)) {
+      const e = src.indexOf("-->", i + 4);
+      const end = e < 0 ? src.length : e + 3;
+      toks.push({ type: "comment", value: src.slice(i, end).trim() });
+      i = end;
+      continue;
+    }
+    if (isTagStart(i)) {
+      let j = i + 1;
+      let q = null;
+      for (; j < src.length; j++) {
+        const c = src[j];
+        if (q) {
+          if (c === q) q = null;
+        } else if (c === '"' || c === "'") q = c;
+        else if (c === ">") break;
+      }
+      const raw = src.slice(i, j + 1);
+      i = j + 1;
+      if (raw[1] === "!" || raw[1] === "?") {
+        toks.push({ type: "doctype", value: normalizeTag(raw) });
+        continue;
+      }
+      const m = /^<\s*(\/)?\s*([^\s/>]+)/.exec(raw);
+      const name = m ? m[2].toLowerCase() : "";
+      const closing = Boolean(m?.[1]);
+      const selfClosing = /\/\s*>$/.test(raw) || HTML_VOID.has(name);
+      toks.push({ type: closing ? "close" : "open", name, value: normalizeTag(raw), selfClosing, rawTag: raw });
+      if (!closing && !selfClosing && HTML_RAW_TEXT.has(name)) {
+        const endTag = new RegExp(`</${name}\\s*>`, "i").exec(src.slice(i));
+        const end = endTag ? i + endTag.index : src.length;
+        toks.push({ type: "raw", name, value: src.slice(i, end) });
+        i = end;
+      }
+      continue;
+    }
+    let j = i + 1;
+    while (j < src.length && !isTagStart(j) && !src.startsWith("<!--", j)) j++;
+    toks.push({ type: "text", value: src.slice(i, j) });
+    i = j;
+  }
+  return toks;
+}
+
+const HTML_BLOCK = new Set(["address", "article", "aside", "blockquote", "body", "dd", "details", "dialog", "div", "dl", "dt", "fieldset", "figcaption", "figure", "footer", "form", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hr", "html", "li", "main", "nav", "ol", "p", "section", "summary", "table", "tbody", "td", "tfoot", "th", "thead", "tr", "ul", "option", "optgroup", "select"]);
+
+/**
+ * If the element opened at toks[k] contains only text and inline tags, returns its
+ * content flattened to one string plus the index of its closing tag. Keeping inline
+ * runs together matters: splitting "<b>world</b>!" across lines would render a space.
+ */
+function inlineContent(toks, k) {
+  let depth = 0;
+  let inner = "";
+  for (let j = k; j < toks.length && j < k + 200; j++) {
+    const t = toks[j];
+    if (t.type === "comment" || t.type === "raw" || t.type === "doctype") return null;
+    if (j > k && (t.type === "open" || t.type === "close") && HTML_BLOCK.has(t.name)) {
+      if (!(t.type === "close" && depth === 1 && t.name === toks[k].name)) return null;
+    }
+    if (t.type === "open" && !t.selfClosing) depth++;
+    if (t.type === "close") depth--;
+    if (depth === 0) {
+      if (t.type !== "close" || t.name !== toks[k].name) return null;
+      return { inner: inner.trim(), close: t.value, end: j };
+    }
+    if (j > k) inner += t.type === "text" ? t.value.replace(/\s+/g, " ") : t.value;
+  }
+  return null;
+}
+
+function formatHtml(src, unit = "  ") {
+  const toks = tokenizeHtml(src);
+  const out = [];
+  let indent = 0;
+  const push = (s, lvl = indent) => out.push(s ? unit.repeat(lvl) + s : "");
+
+  for (let k = 0; k < toks.length; k++) {
+    const t = toks[k];
+    if (t.type === "text") {
+      const s = t.value.replace(/\s+/g, " ").trim();
+      if (s) push(s);
+    } else if (t.type === "comment" || t.type === "doctype") {
+      push(t.value);
+    } else if (t.type === "open") {
+      if (t.selfClosing) {
+        push(t.value);
+        continue;
+      }
+      const raw = toks[k + 1]?.type === "raw" ? toks[k + 1] : null;
+      const closeIdx = raw ? k + 2 : -1;
+      const closeTok = raw && toks[closeIdx]?.type === "close" ? toks[closeIdx] : null;
+      if (raw && HTML_PRESERVE.has(t.name)) {
+        push(t.rawTag + raw.value + (closeTok ? closeTok.rawTag : ""));
+        k = closeTok ? closeIdx : k + 1;
+        continue;
+      }
+      if (raw && !raw.value.trim()) {
+        push(t.value + (closeTok ? closeTok.value : ""));
+        k = closeTok ? closeIdx : k + 1;
+        continue;
+      }
+      if (!raw) {
+        const inline = inlineContent(toks, k);
+        if (inline) {
+          const one = t.value + inline.inner + inline.close;
+          if (one.length + unit.length * indent <= HTML_INLINE_MAX || !inline.inner) {
+            push(one);
+          } else {
+            // Too long for one line: keep the inline run intact on its own indented line.
+            push(t.value);
+            push(inline.inner, indent + 1);
+            push(inline.close);
+          }
+          k = inline.end;
+          continue;
+        }
+      }
+      push(t.value);
+      indent++;
+    } else if (t.type === "raw") {
+      const tag = toks[k - 1]?.rawTag ?? "";
+      const isJs = !/\btype\s*=/i.test(tag) || /\btype\s*=\s*["']?(text\/javascript|module|application\/(x-)?javascript)/i.test(tag);
+      const body = t.name === "style" ? formatCss(t.value, unit) : isJs ? formatJs(t.value, unit) : t.value.trim();
+      for (const l of body.split("\n")) push(l);
+    } else if (t.type === "close") {
+      indent = Math.max(0, indent - 1);
+      push(t.value);
+    }
+  }
+  return out.join("\n");
+}
+
+const FORMATTERS = { html: formatHtml, css: formatCss, js: formatJs };
+const SAMPLE_CODE = {
+  html: '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Demo</title><style>body{margin:0;font-family:system-ui,sans-serif}.card>h2{color:#38bdf8}</style></head><body><div class="card"><h2>Hello <em>world</em></h2><ul><li><a href="/docs">Docs</a></li><li>Blog</li></ul><img src="logo.png" alt="Logo"><pre>  keep   this\n    spacing</pre></div><script>document.querySelector(".card").addEventListener("click",function(e){console.log("clicked",e.target)});</script></body></html>',
+  css: '@media (min-width:768px){.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}}a:hover,a:focus-visible{color:#4ade80;text-decoration:underline}.logo{background:url("data:image/svg+xml;utf8,<svg/>") no-repeat}/* buttons */.btn>span{padding:4px 8px!important}',
+  js:
+    'const api={base:"https://api.example.com",retries:3};async function load(id){if(!id){throw new Error("missing id")}for(let i=0;i<api.retries;i++){try{const res=await fetch(' +
+    "`${api.base}/items/${id}`" +
+    ');return res.ok?await res.json():null}catch(err){console.warn("retry",i,err)}}return null}const double=xs=>xs.map(x=>x*2).filter(x=>x>2&&!/^0$/.test(String(x)));switch(api.retries){case 1:console.log("one");break;default:console.log("many")}',
+};
+
+function CodeBeautifier({ notify }) {
+  const [language, setLanguage] = useState("html");
+  const [indentSize, setIndentSize] = useState("2");
+  const [code, setCode] = useState("");
+  const [output, setOutput] = useState("");
+  const [formattedFrom, setFormattedFrom] = useState(null);
+  const [copied, flashCopied] = useFlash();
+
+  const stale = output && formattedFrom && (formattedFrom.code !== code || formattedFrom.language !== language || formattedFrom.indentSize !== indentSize);
+
+  const handleBeautify = () => {
+    if (!code.trim()) {
+      notify("Paste some code to beautify first", "error");
+      return;
+    }
+    try {
+      setOutput(FORMATTERS[language](code, INDENT_UNITS[indentSize]));
+      setFormattedFrom({ code, language, indentSize });
+    } catch {
+      notify("Couldn't format this input — check the language profile", "error");
+    }
+  };
+
+  const handleCopy = async () => {
+    if (await copyText(output)) {
+      flashCopied();
+      notify("Beautified code copied to clipboard");
+    } else {
+      notify("Clipboard blocked by the browser", "error");
+    }
+  };
+
+  const smallBtn = { ...S.btn("ghost"), padding: "5px 10px", fontSize: 12 };
+
+  return (
+    <section aria-labelledby="beautify-title">
+      <h1 id="beautify-title" style={S.h1}>Code Beautifier &amp; Formatter</h1>
+      <p style={S.lead}>
+        Turn minified or messy HTML, CSS and JavaScript into clean, consistently indented code. Strings, comments,
+        regexes and <code style={{ fontFamily: MONO }}>{"<pre>"}</code> blocks are left untouched.
+      </p>
+
+      <div style={{ ...S.card, marginBottom: 20, display: "flex", flexWrap: "wrap", alignItems: "flex-end", gap: 16 }}>
+        <div style={{ minWidth: 180 }}>
+          <label htmlFor="beautify-lang" style={S.label}>Language profile</label>
+          <select id="beautify-lang" value={language} onChange={(e) => setLanguage(e.target.value)} style={S.select}>
+            <option value="html">HTML</option>
+            <option value="css">CSS</option>
+            <option value="js">JavaScript</option>
+          </select>
+        </div>
+        <div style={{ minWidth: 140 }}>
+          <label htmlFor="beautify-indent" style={S.label}>Indentation</label>
+          <select id="beautify-indent" value={indentSize} onChange={(e) => setIndentSize(e.target.value)} style={S.select}>
+            <option value="2">2 spaces</option>
+            <option value="4">4 spaces</option>
+            <option value="tab">Tabs</option>
+          </select>
+        </div>
+        <button type="button" className="btn-primary" style={{ ...S.btn("primary"), padding: "11px 22px", fontSize: 15 }} onClick={handleBeautify}>
+          💅 Beautify Code
+        </button>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 20 }}>
+        <div style={{ ...S.card, minWidth: 0 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 8, flexWrap: "wrap" }}>
+            <label htmlFor="beautify-input" style={{ ...S.label, marginBottom: 0 }}>Paste Raw/Minified Code</label>
+            <div style={{ display: "flex", gap: 6 }}>
+              <button type="button" className="btn-ghost" style={smallBtn} onClick={() => setCode(SAMPLE_CODE[language])}>
+                Load sample
+              </button>
+              <button type="button" className="btn-ghost" style={smallBtn} onClick={() => { setCode(""); setOutput(""); setFormattedFrom(null); }} disabled={!code && !output}>
+                Clear
+              </button>
+            </div>
+          </div>
+          <textarea
+            id="beautify-input"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                handleBeautify();
+              }
+            }}
+            spellCheck={false}
+            placeholder={language === "html" ? "<div><p>Hello</p></div>" : language === "css" ? ".a{color:red;margin:0}" : "function f(a){return a*2}"}
+            style={{
+              width: "100%",
+              height: 440,
+              resize: "vertical",
+              padding: 16,
+              borderRadius: 8,
+              background: C.bg,
+              border: `1px solid ${C.borderHi}`,
+              color: C.textSoft,
+              fontFamily: MONO,
+              fontSize: 13,
+              lineHeight: 1.55,
+              outline: "none",
+              whiteSpace: "pre",
+              overflowWrap: "normal",
+              overflow: "auto",
+            }}
+          />
+          <p style={{ margin: "8px 0 0", fontSize: 12, color: C.faint }}>
+            Tip: Ctrl + Enter beautifies. JSX and TypeScript-specific syntax aren't supported.
+          </p>
+        </div>
+
+        <div style={{ ...S.card, minWidth: 0, display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 8, flexWrap: "wrap" }}>
+            <span style={{ ...S.label, marginBottom: 0 }}>Beautified output</span>
+            <span style={{ fontSize: 12, fontFamily: MONO, color: stale ? C.amber : C.faint }}>
+              {stale ? "input changed — beautify again" : output ? `${output.split("\n").length} lines` : "idle"}
+            </span>
+          </div>
+          <pre
+            tabIndex={0}
+            aria-label="Beautified code"
+            style={{
+              flex: 1,
+              margin: 0,
+              minHeight: 440,
+              maxHeight: 560,
+              overflow: "auto",
+              padding: 16,
+              borderRadius: 8,
+              background: C.bg,
+              border: `1px solid ${C.borderHi}`,
+              color: output ? C.textSoft : C.faint,
+              fontFamily: MONO,
+              fontSize: 13,
+              lineHeight: 1.55,
+              whiteSpace: "pre",
+              tabSize: 4,
+              opacity: stale ? 0.65 : 1,
+            }}
+          >
+            {output || "// Beautified code will appear here"}
+          </pre>
+          <div style={{ marginTop: 14 }}>
+            <button type="button" className={copied ? "btn-success" : "btn-primary"} style={S.btn(copied ? "success" : "primary")} onClick={handleCopy} disabled={!output}>
+              {copied ? "✓ Copied!" : "📋 Copy Beautified Code"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ==========================================================================
+   Tool 5 — String ⇄ JSON Escaper / Unescaper
+   ========================================================================== */
+const SAMPLE_RAW_STRING = `<div class="alert">
+\tUser said: "Deploy failed" at C:\\builds\\app
+</div>
+Log: ✓ done — 100% 🚀`;
+
+function escapeForJson(input, { quotes, asciiOnly }) {
+  // JSON.stringify handles \\, ", control characters (\\n, \\t, \\r, \\b, \\f, \\u0000–\\u001f) per the JSON spec.
+  let s = JSON.stringify(input);
+  if (asciiOnly) {
+    s = s.replace(/[\u007f-\uffff]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`);
+  }
+  return quotes ? s : s.slice(1, -1);
+}
+
+// Only the escapes JSON defines. Anything else (e.g. "\p" in an unescaped Windows path
+// like C:\projects) is kept verbatim rather than silently losing its backslash.
+const JSON_ESCAPES = { n: "\n", r: "\r", t: "\t", b: "\b", f: "\f", '"': '"', "\\": "\\", "/": "/" };
+
+/**
+ * Strict JSON.parse first; if the input isn't a valid JSON string body (e.g. it
+ * contains raw quotes or newlines), decode escape sequences leniently instead.
+ */
+function unescapeJsonString(input) {
+  const trimmed = input.trim();
+  const quoted = trimmed.length >= 2 && trimmed.startsWith('"') && trimmed.endsWith('"');
+  const body = quoted ? trimmed.slice(1, -1) : input;
+  try {
+    return { value: JSON.parse(`"${body}"`), strict: true };
+  } catch {
+    const value = body.replace(/\\(u[0-9a-fA-F]{4}|[\s\S])/g, (match, e) => {
+      if (e.length > 1) return String.fromCharCode(parseInt(e.slice(1), 16));
+      return JSON_ESCAPES[e] ?? match;
+    });
+    return { value, strict: false };
+  }
+}
+
+function StringEscaper({ notify }) {
+  const [input, setInput] = useState("");
+  const [result, setResult] = useState(null); // { mode, value, from, strict }
+  const [quotes, setQuotes] = useState(false);
+  const [asciiOnly, setAsciiOnly] = useState(false);
+  const [copied, flashCopied] = useFlash();
+
+  const stale = result && result.from !== input;
+
+  const run = (mode) => {
+    if (!input) {
+      notify("Enter some text first", "error");
+      return;
+    }
+    if (mode === "escape") {
+      setResult({ mode, value: escapeForJson(input, { quotes, asciiOnly }), from: input, strict: true });
+    } else {
+      const { value, strict } = unescapeJsonString(input);
+      setResult({ mode, value, from: input, strict });
+    }
+  };
+
+  const handleCopy = async () => {
+    if (await copyText(result.value)) {
+      flashCopied();
+      notify("Result copied to clipboard");
+    } else {
+      notify("Clipboard blocked by the browser", "error");
+    }
+  };
+
+  const bigBtn = { ...S.btn("primary"), padding: "12px 20px", fontSize: 15 };
+
+  return (
+    <section aria-labelledby="escape-title">
+      <h1 id="escape-title" style={S.h1}>String to JSON Escaper / Unescaper</h1>
+      <p style={S.lead}>
+        Turn multi-line text, HTML or logs into a single-line string that's safe inside a JSON value — or decode an
+        escaped string back to readable text. Nothing leaves your browser.
+      </p>
+
+      <div style={S.card}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 8, flexWrap: "wrap" }}>
+          <label htmlFor="escape-input" style={{ ...S.label, marginBottom: 0 }}>Input String Asset Workspace</label>
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <span style={{ fontSize: 12, color: C.faint, fontFamily: MONO }}>{input.length.toLocaleString()} chars</span>
+            <button type="button" className="btn-ghost" style={{ ...S.btn("ghost"), padding: "5px 10px", fontSize: 12 }} onClick={() => setInput(SAMPLE_RAW_STRING)}>
+              Load sample
+            </button>
+            <button type="button" className="btn-ghost" style={{ ...S.btn("ghost"), padding: "5px 10px", fontSize: 12 }} onClick={() => { setInput(""); setResult(null); }} disabled={!input && !result}>
+              Clear
+            </button>
+          </div>
+        </div>
+        <textarea
+          id="escape-input"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          spellCheck={false}
+          placeholder={'Paste raw text to escape, or an escaped string like  Line 1\\nLine 2\\t\\"quoted\\"  to unescape'}
+          style={{
+            width: "100%",
+            height: 260,
+            resize: "vertical",
+            padding: 16,
+            borderRadius: 8,
+            background: C.bg,
+            border: `1px solid ${C.borderHi}`,
+            color: C.textSoft,
+            fontFamily: MONO,
+            fontSize: 13,
+            lineHeight: 1.55,
+            outline: "none",
+          }}
+        />
+
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, marginTop: 16 }}>
+          <button type="button" className="btn-primary" style={bigBtn} onClick={() => run("escape")}>
+            🔒 Escape String for JSON
+          </button>
+          <button type="button" className="btn-success" style={{ ...bigBtn, ...S.btn("success"), padding: "12px 20px", fontSize: 15 }} onClick={() => run("unescape")}>
+            🔓 Unescape Back to Raw Text
+          </button>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "10px 20px", marginLeft: "auto" }}>
+            <Checkbox checked={quotes} onChange={setQuotes}>Wrap in quotes</Checkbox>
+            <Checkbox checked={asciiOnly} onChange={setAsciiOnly}>Escape non-ASCII (\uXXXX)</Checkbox>
+          </div>
+        </div>
+      </div>
+
+      {result && (
+        <div style={{ ...S.card, marginTop: 20, borderColor: stale ? C.amber : result.mode === "escape" ? tint(C.blue, 45) : tint(C.green, 45) }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
+            <span style={{ ...S.label, marginBottom: 0, color: result.mode === "escape" ? C.blue : C.green }}>
+              {result.mode === "escape" ? "🔒 Escaped JSON string" : "🔓 Unescaped raw text"}
+            </span>
+            <span style={{ fontSize: 12, fontFamily: MONO, color: stale ? C.amber : C.faint }}>
+              {stale ? "input changed — run again" : `${result.from.length.toLocaleString()} → ${result.value.length.toLocaleString()} chars`}
+            </span>
+          </div>
+
+          {/* Terminal-style result block */}
+          <div style={{ borderRadius: 8, overflow: "hidden", border: `1px solid ${C.borderHi}` }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", background: C.panelHi, borderBottom: `1px solid ${C.border}` }}>
+              <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: "50%", background: "#ef4444" }} />
+              <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: "50%", background: "#eab308" }} />
+              <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: "50%", background: "#22c55e" }} />
+              <span style={{ marginLeft: 8, fontSize: 12, color: C.faint, fontFamily: MONO }}>
+                {result.mode === "escape" ? "output.json-string" : "output.txt"}
+              </span>
+            </div>
+            <pre
+              tabIndex={0}
+              aria-label="Result"
+              style={{
+                margin: 0,
+                maxHeight: 320,
+                overflow: "auto",
+                padding: 16,
+                background: C.bg,
+                color: result.mode === "escape" ? C.green : C.textSoft,
+                fontFamily: MONO,
+                fontSize: 13,
+                lineHeight: 1.55,
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-all",
+                opacity: stale ? 0.65 : 1,
+              }}
+            >
+              {result.value || <span style={{ color: C.faint }}>(empty string)</span>}
+            </pre>
+          </div>
+
+          {!result.strict && (
+            <p style={{ margin: "10px 0 0", fontSize: 12.5, color: C.amber }}>
+              ⚠ The input wasn't a strictly valid JSON string (e.g. it contains raw quotes or line breaks), so escape
+              sequences were decoded leniently.
+            </p>
+          )}
+
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 14 }}>
+            <button type="button" className={copied ? "btn-success" : "btn-primary"} style={{ ...S.btn(copied ? "success" : "primary"), padding: "12px 22px", fontSize: 15 }} onClick={handleCopy}>
+              {copied ? "✓ Copied!" : "📋 Copy Result"}
+            </button>
+            <button type="button" className="btn-ghost" style={S.btn("ghost")} onClick={() => setInput(result.value)}>
+              ⇅ Use result as input
+            </button>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ==========================================================================
    Privacy Policy & Terms of Use
    ========================================================================== */
 function PolicySection({ title, children }) {
@@ -2037,8 +3017,8 @@ function PrivacyTerms() {
           <strong style={{ color: C.green }}>
             Your tool data never leaves your browser.
           </strong>{" "}
-          Every utility on {SITE_NAME} — including the Cron Scheduler, the CSV to
-          JSON Converter and the JSON Diff Checker — runs entirely client-side in JavaScript. The
+          Every utility on {SITE_NAME} — including the Cron Scheduler, CSV to JSON Converter, JSON Diff
+          Checker, Code Beautifier and String Escaper — runs entirely client-side in JavaScript. The
           text, files and settings you enter are processed locally on your
           device and are never uploaded, transmitted, logged or stored on our
           servers.
@@ -2562,6 +3542,12 @@ export default function App() {
           </div>
           <div hidden={activeTab !== "json-diff"}>
             <JsonDiffChecker notify={notify} />
+          </div>
+          <div hidden={activeTab !== "code-beautifier"}>
+            <CodeBeautifier notify={notify} />
+          </div>
+          <div hidden={activeTab !== "string-escape"}>
+            <StringEscaper notify={notify} />
           </div>
           <div hidden={activeTab !== "privacy"}>
             <PrivacyTerms />
