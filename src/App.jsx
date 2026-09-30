@@ -1,4 +1,11 @@
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 /* ==========================================================================
    Site configuration — replace the placeholders before going live.
@@ -66,11 +73,14 @@ const C = {
   onGreen: "var(--on-green)",
 };
 /** Translucent wash of a token color, e.g. tint(C.green, 6) for a 6% green background. */
-const tint = (color, pct) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
+const tint = (color, pct) =>
+  `color-mix(in srgb, ${color} ${pct}%, transparent)`;
 
 const THEME_KEY = "devstudio-theme";
-const getInitialTheme = () => (document.documentElement.dataset.theme === "light" ? "light" : "dark");
-const MONO = "ui-monospace, SFMono-Regular, 'JetBrains Mono', Consolas, 'Liberation Mono', monospace";
+const getInitialTheme = () =>
+  document.documentElement.dataset.theme === "light" ? "light" : "dark";
+const MONO =
+  "ui-monospace, SFMono-Regular, 'JetBrains Mono', Consolas, 'Liberation Mono', monospace";
 
 const S = {
   card: {
@@ -98,7 +108,13 @@ const S = {
     cursor: "pointer",
     outline: "none",
   },
-  h1: { fontSize: 28, fontWeight: 700, margin: "0 0 6px", color: C.text, letterSpacing: "-0.02em" },
+  h1: {
+    fontSize: 28,
+    fontWeight: 700,
+    margin: "0 0 6px",
+    color: C.text,
+    letterSpacing: "-0.02em",
+  },
   lead: { color: C.muted, margin: "0 0 28px", maxWidth: 640 },
   btn: (variant = "primary") => ({
     display: "inline-flex",
@@ -110,9 +126,21 @@ const S = {
     fontSize: 14,
     cursor: "pointer",
     whiteSpace: "nowrap",
-    ...(variant === "primary" && { background: C.blue, color: C.onBlue, border: `1px solid ${C.blue}` }),
-    ...(variant === "success" && { background: C.green, color: C.onGreen, border: `1px solid ${C.green}` }),
-    ...(variant === "ghost" && { background: "transparent", color: C.muted, border: `1px solid ${C.borderHi}` }),
+    ...(variant === "primary" && {
+      background: C.blue,
+      color: C.onBlue,
+      border: `1px solid ${C.blue}`,
+    }),
+    ...(variant === "success" && {
+      background: C.green,
+      color: C.onGreen,
+      border: `1px solid ${C.green}`,
+    }),
+    ...(variant === "ghost" && {
+      background: "transparent",
+      color: C.muted,
+      border: `1px solid ${C.borderHi}`,
+    }),
   }),
 };
 
@@ -184,7 +212,13 @@ function Toast({ toast }) {
     <div
       role="status"
       aria-live="polite"
-      style={{ position: "fixed", right: 24, bottom: 24, zIndex: 50, pointerEvents: "none" }}
+      style={{
+        position: "fixed",
+        right: 24,
+        bottom: 24,
+        zIndex: 50,
+        pointerEvents: "none",
+      }}
     >
       {toast && (
         <div
@@ -257,12 +291,27 @@ function Segmented({ value, onChange, options, ariaLabel }) {
 
 function Checkbox({ checked, onChange, children }) {
   return (
-    <label style={{ display: "inline-flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 14, color: C.textSoft }}>
+    <label
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+        cursor: "pointer",
+        fontSize: 14,
+        color: C.textSoft,
+      }}
+    >
       <input
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        style={{ width: 16, height: 16, accentColor: C.blue, cursor: "pointer", margin: 0 }}
+        style={{
+          width: 16,
+          height: 16,
+          accentColor: C.blue,
+          cursor: "pointer",
+          margin: 0,
+        }}
       />
       {children}
     </label>
@@ -274,8 +323,23 @@ function Checkbox({ checked, onChange, children }) {
    ========================================================================== */
 function AdLeaderboard() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 32 }}>
-      <span style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: C.faint, marginBottom: 4 }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        marginBottom: 32,
+      }}
+    >
+      <span
+        style={{
+          fontSize: 10,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+          color: C.faint,
+          marginBottom: 4,
+        }}
+      >
         Advertisement
       </span>
       {/* Replace the inner text with your AdSense unit, e.g.
@@ -309,11 +373,28 @@ function AdLeaderboard() {
 
 function SidebarAd() {
   return (
-    <div className="sidebar-ad" style={{ width: 240, height: 200, marginTop: "auto", display: "flex", flexDirection: "column" }}>
-      <span style={{ fontFamily: MONO, fontSize: 10, color: C.faint, marginBottom: 6, textAlign: "center" }}>
+    <div
+      className="sidebar-ad"
+      style={{
+        width: 240,
+        height: 200,
+        marginTop: "auto",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <span
+        style={{
+          fontFamily: MONO,
+          fontSize: 10,
+          color: C.faint,
+          marginBottom: 6,
+          textAlign: "center",
+        }}
+      >
         {"<!-- Sponsored Partner Ad Slot -->"}
       </span>
-      <a
+      {/* <a
         className="sponsor-card"
         href={PARTNER_URL}
         target="_blank"
@@ -363,7 +444,7 @@ function SidebarAd() {
         >
           [Partner Link] →
         </span>
-      </a>
+      </a> */}
     </div>
   );
 }
@@ -371,7 +452,15 @@ function SidebarAd() {
 /* ==========================================================================
    Tool 1 — Advanced Cron Scheduler
    ========================================================================== */
-const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const DAYS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
 const HOUR_STEPS = [2, 3, 4, 6, 8, 12];
 const MINUTE_STEPS = [5, 10, 15, 20, 30];
 const CRON_FIELDS = [
@@ -387,7 +476,16 @@ function summarizeList(items, max = 6) {
   return `${items.slice(0, max - 2).join(", ")}, …, ${items[items.length - 1]}`;
 }
 
-function buildCron({ preset, minute, hour, dow, customUnit, hourStep, minuteStep, customMinute }) {
+function buildCron({
+  preset,
+  minute,
+  hour,
+  dow,
+  customUnit,
+  hourStep,
+  minuteStep,
+  customMinute,
+}) {
   switch (preset) {
     case "hourly":
       return {
@@ -407,7 +505,9 @@ function buildCron({ preset, minute, hour, dow, customUnit, hourStep, minuteStep
     case "custom": {
       if (customUnit === "hours") {
         // Every option divides 24 evenly, so the step never drifts across midnight.
-        const times = range(0, 23, hourStep).map((h) => `${pad(h)}:${pad(customMinute)}`);
+        const times = range(0, 23, hourStep).map(
+          (h) => `${pad(h)}:${pad(customMinute)}`,
+        );
         return {
           expression: `${customMinute} */${hourStep} * * *`,
           description: `Triggered exactly every ${hourStep} hours at minute ${customMinute} — ${times.length} runs per day at ${summarizeList(times)}.`,
@@ -423,7 +523,8 @@ function buildCron({ preset, minute, hour, dow, customUnit, hourStep, minuteStep
     default:
       return {
         expression: "* * * * *",
-        description: "Triggered every single minute of every hour, every day — 1,440 runs per day.",
+        description:
+          "Triggered every single minute of every hour, every day — 1,440 runs per day.",
       };
   }
 }
@@ -469,8 +570,18 @@ function CronScheduler({ notify }) {
   const [copied, flashCopied] = useFlash();
 
   const { expression, description } = useMemo(
-    () => buildCron({ preset, minute, hour, dow, customUnit, hourStep, minuteStep, customMinute }),
-    [preset, minute, hour, dow, customUnit, hourStep, minuteStep, customMinute]
+    () =>
+      buildCron({
+        preset,
+        minute,
+        hour,
+        dow,
+        customUnit,
+        hourStep,
+        minuteStep,
+        customMinute,
+      }),
+    [preset, minute, hour, dow, customUnit, hourStep, minuteStep, customMinute],
   );
   const upcoming = useMemo(() => nextRuns(expression), [expression]);
   const parts = expression.split(" ");
@@ -481,12 +592,20 @@ function CronScheduler({ notify }) {
       flashCopied();
       notify(`Copied "${expression}" to clipboard`);
     } else {
-      notify("Clipboard blocked — select the expression and copy manually", "error");
+      notify(
+        "Clipboard blocked — select the expression and copy manually",
+        "error",
+      );
     }
   };
 
   const numSelect = (value, setter, options, fmt = (v) => v, label) => (
-    <select value={value} onChange={(e) => setter(Number(e.target.value))} style={S.select} aria-label={label}>
+    <select
+      value={value}
+      onChange={(e) => setter(Number(e.target.value))}
+      style={S.select}
+      aria-label={label}
+    >
       {options.map((v) => (
         <option key={v} value={v}>
           {fmt(v)}
@@ -495,22 +614,39 @@ function CronScheduler({ notify }) {
     </select>
   );
 
-  const showMinute = preset === "hourly" || preset === "daily" || preset === "weekly";
+  const showMinute =
+    preset === "hourly" || preset === "daily" || preset === "weekly";
   const showHour = preset === "daily" || preset === "weekly";
 
   return (
     <section aria-labelledby="cron-title">
-      <h1 id="cron-title" style={S.h1}>Advanced Cron Scheduler</h1>
+      <h1 id="cron-title" style={S.h1}>
+        Advanced Cron Scheduler
+      </h1>
       <p style={S.lead}>
-        Build production-ready crontab expressions visually — including custom step intervals — and preview exactly when
-        they will fire.
+        Build production-ready crontab expressions visually — including custom
+        step intervals — and preview exactly when they will fire.
       </p>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20, alignItems: "start" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+          gap: 20,
+          alignItems: "start",
+        }}
+      >
         {/* Configuration */}
         <div style={S.card}>
-          <label htmlFor="cron-preset" style={S.label}>Schedule frequency</label>
-          <select id="cron-preset" value={preset} onChange={(e) => setPreset(e.target.value)} style={S.select}>
+          <label htmlFor="cron-preset" style={S.label}>
+            Schedule frequency
+          </label>
+          <select
+            id="cron-preset"
+            value={preset}
+            onChange={(e) => setPreset(e.target.value)}
+            style={S.select}
+          >
             <option value="every-minute">Every Minute</option>
             <option value="hourly">Hourly</option>
             <option value="daily">Daily</option>
@@ -519,11 +655,24 @@ function CronScheduler({ notify }) {
           </select>
 
           {(showMinute || showHour) && (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 12, marginTop: 20 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))",
+                gap: 12,
+                marginTop: 20,
+              }}
+            >
               {preset === "weekly" && (
                 <div>
                   <span style={S.label}>Day</span>
-                  {numSelect(dow, setDow, range(0, 6), (d) => DAYS[d], "Day of week")}
+                  {numSelect(
+                    dow,
+                    setDow,
+                    range(0, 6),
+                    (d) => DAYS[d],
+                    "Day of week",
+                  )}
                 </div>
               )}
               {showHour && (
@@ -549,8 +698,19 @@ function CronScheduler({ notify }) {
                 border: `1px solid ${tint(C.blue, 25)}`,
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
-                <span style={{ ...S.label, marginBottom: 0, color: C.blue }}>Custom interval</span>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: 12,
+                  marginBottom: 16,
+                }}
+              >
+                <span style={{ ...S.label, marginBottom: 0, color: C.blue }}>
+                  Custom interval
+                </span>
                 <Segmented
                   ariaLabel="Interval unit"
                   value={customUnit}
@@ -563,25 +723,51 @@ function CronScheduler({ notify }) {
               </div>
 
               {customUnit === "hours" ? (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 12,
+                  }}
+                >
                   <div>
                     <span style={S.label}>Run every</span>
-                    {numSelect(hourStep, setHourStep, HOUR_STEPS, (v) => `${v} hours`, "Run every X hours")}
+                    {numSelect(
+                      hourStep,
+                      setHourStep,
+                      HOUR_STEPS,
+                      (v) => `${v} hours`,
+                      "Run every X hours",
+                    )}
                   </div>
                   <div>
                     <span style={S.label}>At minute</span>
-                    {numSelect(customMinute, setCustomMinute, range(0, 59), pad, "At minute")}
+                    {numSelect(
+                      customMinute,
+                      setCustomMinute,
+                      range(0, 59),
+                      pad,
+                      "At minute",
+                    )}
                   </div>
                 </div>
               ) : (
                 <div>
                   <span style={S.label}>Run every</span>
-                  {numSelect(minuteStep, setMinuteStep, MINUTE_STEPS, (v) => `${v} minutes`, "Run every X minutes")}
+                  {numSelect(
+                    minuteStep,
+                    setMinuteStep,
+                    MINUTE_STEPS,
+                    (v) => `${v} minutes`,
+                    "Run every X minutes",
+                  )}
                 </div>
               )}
               <p style={{ margin: "12px 0 0", fontSize: 12.5, color: C.faint }}>
-                Step values are limited to divisors of {customUnit === "hours" ? "24" : "60"} so the gap between runs is
-                always identical — no uneven jump at the {customUnit === "hours" ? "day" : "hour"} boundary.
+                Step values are limited to divisors of{" "}
+                {customUnit === "hours" ? "24" : "60"} so the gap between runs
+                is always identical — no uneven jump at the{" "}
+                {customUnit === "hours" ? "day" : "hour"} boundary.
               </p>
             </div>
           )}
@@ -589,7 +775,9 @@ function CronScheduler({ notify }) {
 
         {/* Output */}
         <div style={S.card}>
-          <label htmlFor="cron-output" style={S.label}>Generated cron expression</label>
+          <label htmlFor="cron-output" style={S.label}>
+            Generated cron expression
+          </label>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <input
               id="cron-output"
@@ -611,20 +799,56 @@ function CronScheduler({ notify }) {
                 outline: "none",
               }}
             />
-            <button type="button" onClick={handleCopy} className={copied ? "btn-success" : "btn-primary"} style={S.btn(copied ? "success" : "primary")}>
+            <button
+              type="button"
+              onClick={handleCopy}
+              className={copied ? "btn-success" : "btn-primary"}
+              style={S.btn(copied ? "success" : "primary")}
+            >
               {copied ? "✓ Copied!" : "📋 Copy to Clipboard"}
             </button>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 6, marginTop: 14 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(5, 1fr)",
+              gap: 6,
+              marginTop: 14,
+            }}
+          >
             {CRON_FIELDS.map((f, i) => (
               <div
                 key={f.name}
                 title={`${f.name}: ${f.range}`}
-                style={{ textAlign: "center", padding: "8px 4px", borderRadius: 6, background: C.bg, border: `1px solid ${C.border}` }}
+                style={{
+                  textAlign: "center",
+                  padding: "8px 4px",
+                  borderRadius: 6,
+                  background: C.bg,
+                  border: `1px solid ${C.border}`,
+                }}
               >
-                <div style={{ fontFamily: MONO, fontSize: 15, color: parts[i] === "*" ? C.faint : C.blue, fontWeight: 600 }}>{parts[i]}</div>
-                <div style={{ fontSize: 10, color: C.faint, marginTop: 2, lineHeight: 1.2 }}>{f.name}</div>
+                <div
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 15,
+                    color: parts[i] === "*" ? C.faint : C.blue,
+                    fontWeight: 600,
+                  }}
+                >
+                  {parts[i]}
+                </div>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: C.faint,
+                    marginTop: 2,
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {f.name}
+                </div>
               </div>
             ))}
           </div>
@@ -648,17 +872,45 @@ function CronScheduler({ notify }) {
           </div>
 
           <div style={{ marginTop: 20 }}>
-            <span style={S.label}>Next {upcoming.length} runs (your local time)</span>
-            <ol style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 4 }}>
+            <span style={S.label}>
+              Next {upcoming.length} runs (your local time)
+            </span>
+            <ol
+              style={{
+                margin: 0,
+                padding: 0,
+                listStyle: "none",
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+              }}
+            >
               {upcoming.map((d, i) => (
-                <li key={d.getTime()} style={{ display: "flex", gap: 10, fontFamily: MONO, fontSize: 13, color: i === 0 ? C.text : C.muted }}>
+                <li
+                  key={d.getTime()}
+                  style={{
+                    display: "flex",
+                    gap: 10,
+                    fontFamily: MONO,
+                    fontSize: 13,
+                    color: i === 0 ? C.text : C.muted,
+                  }}
+                >
                   <span style={{ color: C.faint, width: 18 }}>{i + 1}.</span>
-                  {d.toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false })}
+                  {d.toLocaleString(undefined, {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                  })}
                 </li>
               ))}
             </ol>
             <p style={{ margin: "10px 0 0", fontSize: 12, color: C.faint }}>
-              Cron daemons evaluate schedules in the server's time zone — confirm it matches before deploying.
+              Cron daemons evaluate schedules in the server's time zone —
+              confirm it matches before deploying.
             </p>
           </div>
         </div>
@@ -745,7 +997,10 @@ function parseCsv(text, delimiter) {
   if (field !== "" || row.length > 0) endRow();
 
   // Drop blank lines (a row consisting of a single empty/whitespace field).
-  return { rows: rows.filter((r) => !(r.length === 1 && r[0].trim() === "")), unterminated: inQuotes };
+  return {
+    rows: rows.filter((r) => !(r.length === 1 && r[0].trim() === "")),
+    unterminated: inQuotes,
+  };
 }
 
 const NUMERIC = /^-?(0|[1-9]\d*)(\.\d+)?([eE][+-]?\d+)?$/;
@@ -758,7 +1013,11 @@ function coerce(value, autoType) {
   // Leading-zero values (ZIP codes, IDs) fail the regex and stay strings; so do integers beyond 2^53.
   if (NUMERIC.test(value)) {
     const n = Number(value);
-    if (Number.isFinite(n) && (value.includes(".") || /e/i.test(value) || Number.isSafeInteger(n))) return n;
+    if (
+      Number.isFinite(n) &&
+      (value.includes(".") || /e/i.test(value) || Number.isSafeInteger(n))
+    )
+      return n;
   }
   return value;
 }
@@ -774,13 +1033,18 @@ function uniqueHeaders(raw) {
 }
 
 function convertCsv(text, { hasHeaders, autoType, trim, delimiterMode }) {
-  if (!text.trim()) return { json: "", records: 0, columns: 0, delimiter: null, warnings: [] };
+  if (!text.trim())
+    return { json: "", records: 0, columns: 0, delimiter: null, warnings: [] };
 
-  const delimiter = delimiterMode === "auto" ? detectDelimiter(text) : delimiterMode;
+  const delimiter =
+    delimiterMode === "auto" ? detectDelimiter(text) : delimiterMode;
   const { rows, unterminated } = parseCsv(text, delimiter);
   const clean = (v) => coerce(trim ? v.trim() : v, autoType);
   const warnings = [];
-  if (unterminated) warnings.push("Unterminated quoted field — the last value runs to the end of the input.");
+  if (unterminated)
+    warnings.push(
+      "Unterminated quoted field — the last value runs to the end of the input.",
+    );
 
   let data;
   let columns;
@@ -789,7 +1053,10 @@ function convertCsv(text, { hasHeaders, autoType, trim, delimiterMode }) {
     const body = rows.slice(1);
     columns = headers.length;
     const ragged = body.filter((r) => r.length !== headers.length).length;
-    if (ragged) warnings.push(`${ragged} row(s) have a different column count than the header — missing cells set to null, extras keyed column_N.`);
+    if (ragged)
+      warnings.push(
+        `${ragged} row(s) have a different column count than the header — missing cells set to null, extras keyed column_N.`,
+      );
     data = body.map((r) => {
       const obj = {};
       const width = Math.max(headers.length, r.length);
@@ -804,10 +1071,17 @@ function convertCsv(text, { hasHeaders, autoType, trim, delimiterMode }) {
     data = rows.map((r) => r.map(clean));
   }
 
-  return { json: JSON.stringify(data, null, 2), records: data.length, columns, delimiter, warnings };
+  return {
+    json: JSON.stringify(data, null, 2),
+    records: data.length,
+    columns,
+    delimiter,
+    warnings,
+  };
 }
 
-const JSON_TOKEN = /("(?:\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*")(\s*:)?|\b(true|false|null)\b|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g;
+const JSON_TOKEN =
+  /("(?:\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*")(\s*:)?|\b(true|false|null)\b|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g;
 const HIGHLIGHT_LIMIT = 200_000; // chars; above this render plain text to keep the DOM light
 
 function JsonView({ json }) {
@@ -820,13 +1094,30 @@ function JsonView({ json }) {
       if (m.index > last) out.push(json.slice(last, m.index));
       const [token, str, colon, literal, num] = m;
       if (str !== undefined && colon !== undefined) {
-        out.push(<span key={k++} style={{ color: C.blue }}>{str}</span>, colon);
+        out.push(
+          <span key={k++} style={{ color: C.blue }}>
+            {str}
+          </span>,
+          colon,
+        );
       } else if (str !== undefined) {
-        out.push(<span key={k++} style={{ color: C.green }}>{token}</span>);
+        out.push(
+          <span key={k++} style={{ color: C.green }}>
+            {token}
+          </span>,
+        );
       } else if (literal !== undefined) {
-        out.push(<span key={k++} style={{ color: C.violet }}>{token}</span>);
+        out.push(
+          <span key={k++} style={{ color: C.violet }}>
+            {token}
+          </span>,
+        );
       } else if (num !== undefined) {
-        out.push(<span key={k++} style={{ color: C.amber }}>{token}</span>);
+        out.push(
+          <span key={k++} style={{ color: C.amber }}>
+            {token}
+          </span>,
+        );
       }
       last = m.index + token.length;
     }
@@ -854,7 +1145,13 @@ function JsonView({ json }) {
         tabSize: 2,
       }}
     >
-      {json ? nodes : <span style={{ color: C.faint }}>{"// JSON output will appear here as you type"}</span>}
+      {json ? (
+        nodes
+      ) : (
+        <span style={{ color: C.faint }}>
+          {"// JSON output will appear here as you type"}
+        </span>
+      )}
     </pre>
   );
 }
@@ -872,8 +1169,9 @@ function CsvToJson({ notify }) {
   // Keeps typing responsive on large pastes: conversion runs against a deferred copy of the input.
   const deferredInput = useDeferredValue(input);
   const result = useMemo(
-    () => convertCsv(deferredInput, { hasHeaders, autoType, trim, delimiterMode }),
-    [deferredInput, hasHeaders, autoType, trim, delimiterMode]
+    () =>
+      convertCsv(deferredInput, { hasHeaders, autoType, trim, delimiterMode }),
+    [deferredInput, hasHeaders, autoType, trim, delimiterMode],
   );
   const stale = deferredInput !== input;
 
@@ -893,8 +1191,12 @@ function CsvToJson({ notify }) {
 
   const handleDownload = () => {
     if (!result.json) return;
-    const safe = (fileName.trim() || "data").replace(/[\\/:*?"<>|]+/g, "_").replace(/\.json$/i, "");
-    const blob = new Blob([result.json], { type: "application/json;charset=utf-8" });
+    const safe = (fileName.trim() || "data")
+      .replace(/[\\/:*?"<>|]+/g, "_")
+      .replace(/\.json$/i, "");
+    const blob = new Blob([result.json], {
+      type: "application/json;charset=utf-8",
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -919,19 +1221,48 @@ function CsvToJson({ notify }) {
 
   return (
     <section aria-labelledby="csv-title">
-      <h1 id="csv-title" style={S.h1}>CSV to JSON Converter</h1>
+      <h1 id="csv-title" style={S.h1}>
+        CSV to JSON Converter
+      </h1>
       <p style={S.lead}>
-        Paste CSV or TSV data and get a structured JSON array instantly. Parsing runs entirely in your browser — your data
-        never leaves this device.
+        Paste CSV or TSV data and get a structured JSON array instantly. Parsing
+        runs entirely in your browser — your data never leaves this device.
       </p>
 
-      <div style={{ ...S.card, marginBottom: 20, display: "flex", flexWrap: "wrap", alignItems: "center", gap: "14px 24px" }}>
-        <Checkbox checked={hasHeaders} onChange={setHasHeaders}>First row contains headers</Checkbox>
-        <Checkbox checked={autoType} onChange={setAutoType}>Detect numbers &amp; booleans</Checkbox>
-        <Checkbox checked={trim} onChange={setTrim}>Trim whitespace</Checkbox>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: "auto" }}>
+      <div
+        style={{
+          ...S.card,
+          marginBottom: 20,
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          gap: "14px 24px",
+        }}
+      >
+        <Checkbox checked={hasHeaders} onChange={setHasHeaders}>
+          First row contains headers
+        </Checkbox>
+        <Checkbox checked={autoType} onChange={setAutoType}>
+          Detect numbers &amp; booleans
+        </Checkbox>
+        <Checkbox checked={trim} onChange={setTrim}>
+          Trim whitespace
+        </Checkbox>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            marginLeft: "auto",
+          }}
+        >
           <span style={{ ...S.label, marginBottom: 0 }}>Delimiter</span>
-          <select value={delimiterMode} onChange={(e) => setDelimiterMode(e.target.value)} style={{ ...S.select, width: "auto" }} aria-label="Delimiter">
+          <select
+            value={delimiterMode}
+            onChange={(e) => setDelimiterMode(e.target.value)}
+            style={{ ...S.select, width: "auto" }}
+            aria-label="Delimiter"
+          >
             <option value="auto">Auto-detect</option>
             <option value=",">Comma ( , )</option>
             <option value={"\t"}>Tab ( ⇥ )</option>
@@ -940,30 +1271,74 @@ function CsvToJson({ notify }) {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 20 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
+          gap: 20,
+        }}
+      >
         {/* Input */}
         <div style={S.card}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 8, flexWrap: "wrap" }}>
-            <label htmlFor="csv-input" style={{ ...S.label, marginBottom: 0 }}>CSV input</label>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 8,
+              gap: 8,
+              flexWrap: "wrap",
+            }}
+          >
+            <label htmlFor="csv-input" style={{ ...S.label, marginBottom: 0 }}>
+              CSV input
+            </label>
             <div style={{ display: "flex", gap: 6 }}>
-              <button type="button" className="btn-ghost" style={{ ...S.btn("ghost"), padding: "5px 10px", fontSize: 12 }} onClick={() => fileInput.current?.click()}>
+              <button
+                type="button"
+                className="btn-ghost"
+                style={{ ...S.btn("ghost"), padding: "5px 10px", fontSize: 12 }}
+                onClick={() => fileInput.current?.click()}
+              >
                 Open file
               </button>
-              <button type="button" className="btn-ghost" style={{ ...S.btn("ghost"), padding: "5px 10px", fontSize: 12 }} onClick={() => { setInput(SAMPLE_CSV); setFileName("sample"); }}>
+              <button
+                type="button"
+                className="btn-ghost"
+                style={{ ...S.btn("ghost"), padding: "5px 10px", fontSize: 12 }}
+                onClick={() => {
+                  setInput(SAMPLE_CSV);
+                  setFileName("sample");
+                }}
+              >
                 Load sample
               </button>
-              <button type="button" className="btn-ghost" style={{ ...S.btn("ghost"), padding: "5px 10px", fontSize: 12 }} onClick={() => setInput("")} disabled={!input}>
+              <button
+                type="button"
+                className="btn-ghost"
+                style={{ ...S.btn("ghost"), padding: "5px 10px", fontSize: 12 }}
+                onClick={() => setInput("")}
+                disabled={!input}
+              >
                 Clear
               </button>
             </div>
-            <input ref={fileInput} type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values" onChange={handleFile} hidden />
+            <input
+              ref={fileInput}
+              type="file"
+              accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values"
+              onChange={handleFile}
+              hidden
+            />
           </div>
           <textarea
             id="csv-input"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             spellCheck={false}
-            placeholder={"name,email,age\nAda,ada@example.com,36\nGrace,grace@example.com,45"}
+            placeholder={
+              "name,email,age\nAda,ada@example.com,36\nGrace,grace@example.com,45"
+            }
             style={{
               width: "100%",
               height: 380,
@@ -986,9 +1361,24 @@ function CsvToJson({ notify }) {
 
         {/* Output */}
         <div style={S.card}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 8, flexWrap: "wrap" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 8,
+              gap: 8,
+              flexWrap: "wrap",
+            }}
+          >
             <span style={{ ...S.label, marginBottom: 0 }}>JSON output</span>
-            <span style={{ fontSize: 12, color: stale ? C.amber : C.faint, fontFamily: MONO }}>
+            <span
+              style={{
+                fontSize: 12,
+                color: stale ? C.amber : C.faint,
+                fontFamily: MONO,
+              }}
+            >
               {stale
                 ? "converting…"
                 : result.delimiter
@@ -996,15 +1386,30 @@ function CsvToJson({ notify }) {
                   : "idle"}
             </span>
           </div>
-          <div style={{ opacity: stale ? 0.6 : 1, transition: "opacity 0.15s" }}>
+          <div
+            style={{ opacity: stale ? 0.6 : 1, transition: "opacity 0.15s" }}
+          >
             <JsonView json={result.json} />
           </div>
 
           {result.warnings.map((w) => (
-            <p key={w} style={{ margin: "10px 0 0", fontSize: 12.5, color: C.amber }}>⚠ {w}</p>
+            <p
+              key={w}
+              style={{ margin: "10px 0 0", fontSize: 12.5, color: C.amber }}
+            >
+              ⚠ {w}
+            </p>
           ))}
 
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 14, alignItems: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 10,
+              marginTop: 14,
+              alignItems: "center",
+            }}
+          >
             <div
               style={{
                 display: "flex",
@@ -1021,14 +1426,45 @@ function CsvToJson({ notify }) {
                 value={fileName}
                 onChange={(e) => setFileName(e.target.value)}
                 aria-label="Download file name"
-                style={{ flex: 1, minWidth: 0, padding: "10px 0 10px 12px", background: "transparent", border: "none", color: C.text, outline: "none", fontFamily: MONO, fontSize: 13 }}
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  padding: "10px 0 10px 12px",
+                  background: "transparent",
+                  border: "none",
+                  color: C.text,
+                  outline: "none",
+                  fontFamily: MONO,
+                  fontSize: 13,
+                }}
               />
-              <span style={{ padding: "0 12px", color: C.faint, fontFamily: MONO, fontSize: 13 }}>.json</span>
+              <span
+                style={{
+                  padding: "0 12px",
+                  color: C.faint,
+                  fontFamily: MONO,
+                  fontSize: 13,
+                }}
+              >
+                .json
+              </span>
             </div>
-            <button type="button" className="btn-ghost" style={S.btn("ghost")} onClick={handleCopy} disabled={!result.json}>
+            <button
+              type="button"
+              className="btn-ghost"
+              style={S.btn("ghost")}
+              onClick={handleCopy}
+              disabled={!result.json}
+            >
               {copied ? "✓ Copied" : "Copy"}
             </button>
-            <button type="button" className="btn-success" style={S.btn("success")} onClick={handleDownload} disabled={!result.json}>
+            <button
+              type="button"
+              className="btn-success"
+              style={S.btn("success")}
+              onClick={handleDownload}
+              disabled={!result.json}
+            >
               ⬇ Download .json File
             </button>
           </div>
@@ -1044,8 +1480,26 @@ function CsvToJson({ notify }) {
 function PolicySection({ title, children }) {
   return (
     <section style={{ marginBottom: 28 }}>
-      <h2 style={{ fontSize: 18, fontWeight: 650, color: C.text, margin: "0 0 10px" }}>{title}</h2>
-      <div style={{ color: C.muted, display: "flex", flexDirection: "column", gap: 10 }}>{children}</div>
+      <h2
+        style={{
+          fontSize: 18,
+          fontWeight: 650,
+          color: C.text,
+          margin: "0 0 10px",
+        }}
+      >
+        {title}
+      </h2>
+      <div
+        style={{
+          color: C.muted,
+          display: "flex",
+          flexDirection: "column",
+          gap: 10,
+        }}
+      >
+        {children}
+      </div>
     </section>
   );
 }
@@ -1059,11 +1513,22 @@ const ExtLink = ({ href, children }) => (
 
 function PrivacyTerms() {
   const p = { margin: 0, lineHeight: 1.7 };
-  const ul = { margin: 0, paddingLeft: 20, lineHeight: 1.7, display: "flex", flexDirection: "column", gap: 4 };
+  const ul = {
+    margin: 0,
+    paddingLeft: 20,
+    lineHeight: 1.7,
+    display: "flex",
+    flexDirection: "column",
+    gap: 4,
+  };
   return (
     <article aria-labelledby="privacy-title" style={{ maxWidth: 780 }}>
-      <h1 id="privacy-title" style={S.h1}>Privacy Policy &amp; Terms of Use</h1>
-      <p style={{ ...S.lead, marginBottom: 32 }}>Effective date: {POLICY_EFFECTIVE_DATE}</p>
+      <h1 id="privacy-title" style={S.h1}>
+        Privacy Policy &amp; Terms of Use
+      </h1>
+      <p style={{ ...S.lead, marginBottom: 32 }}>
+        Effective date: {POLICY_EFFECTIVE_DATE}
+      </p>
 
       <div
         style={{
@@ -1076,71 +1541,104 @@ function PrivacyTerms() {
           alignItems: "flex-start",
         }}
       >
-        <span style={{ fontSize: 22 }} aria-hidden="true">🔒</span>
+        <span style={{ fontSize: 22 }} aria-hidden="true">
+          🔒
+        </span>
         <p style={{ ...p, color: C.textSoft }}>
-          <strong style={{ color: C.green }}>Your tool data never leaves your browser.</strong> Every utility on {SITE_NAME}{" "}
-          — including the Cron Scheduler and the CSV to JSON Converter — runs entirely client-side in JavaScript. The text,
-          files and settings you enter are processed locally on your device and are never uploaded, transmitted, logged or
-          stored on our servers.
+          <strong style={{ color: C.green }}>
+            Your tool data never leaves your browser.
+          </strong>{" "}
+          Every utility on {SITE_NAME} — including the Cron Scheduler and the
+          CSV to JSON Converter — runs entirely client-side in JavaScript. The
+          text, files and settings you enter are processed locally on your
+          device and are never uploaded, transmitted, logged or stored on our
+          servers.
         </p>
       </div>
 
-      <h2 style={{ fontSize: 22, color: C.blue, margin: "0 0 20px" }}>Privacy Policy</h2>
+      <h2 style={{ fontSize: 22, color: C.blue, margin: "0 0 20px" }}>
+        Privacy Policy
+      </h2>
 
       <PolicySection title="1. Introduction">
         <p style={p}>
-          This Privacy Policy explains how {SITE_NAME} ("we", "us", "our"), accessible at {SITE_URL}, handles information
-          when you visit our website. By using the site you agree to the practices described here. If you do not agree,
-          please discontinue use of the site.
+          This Privacy Policy explains how {SITE_NAME} ("we", "us", "our"),
+          accessible at {SITE_URL}, handles information when you visit our
+          website. By using the site you agree to the practices described here.
+          If you do not agree, please discontinue use of the site.
         </p>
       </PolicySection>
 
       <PolicySection title="2. Information We Process">
         <p style={p}>
-          <strong style={{ color: C.textSoft }}>Tool input (client-side only).</strong> Data you paste, type or open in our
-          tools is processed exclusively within your browser's memory. We have no technical means to view it, and it is
-          discarded when you close or reload the page.
+          <strong style={{ color: C.textSoft }}>
+            Tool input (client-side only).
+          </strong>{" "}
+          Data you paste, type or open in our tools is processed exclusively
+          within your browser's memory. We have no technical means to view it,
+          and it is discarded when you close or reload the page.
         </p>
         <p style={p}>
-          <strong style={{ color: C.textSoft }}>Log files.</strong> Like most websites, our hosting provider may
-          automatically record standard server log data such as your IP address, browser type, referring page, pages
-          visited and the date and time of the request. This information is used for security, troubleshooting and
-          aggregate traffic analysis and is not linked to any personally identifiable information.
+          <strong style={{ color: C.textSoft }}>Log files.</strong> Like most
+          websites, our hosting provider may automatically record standard
+          server log data such as your IP address, browser type, referring page,
+          pages visited and the date and time of the request. This information
+          is used for security, troubleshooting and aggregate traffic analysis
+          and is not linked to any personally identifiable information.
         </p>
         <p style={p}>
-          We do not require accounts, and we do not knowingly collect names, email addresses or other personal information
-          unless you choose to contact us directly.
+          We do not require accounts, and we do not knowingly collect names,
+          email addresses or other personal information unless you choose to
+          contact us directly.
         </p>
       </PolicySection>
 
       <PolicySection title="3. Cookies and Web Beacons">
         <p style={p}>
-          Cookies are small text files stored on your device by your web browser. {SITE_NAME} itself does not set cookies
-          to operate its tools. However, our advertising and analytics partners may place cookies, web beacons and similar
-          technologies on your device to store preferences, measure ad performance, limit how often you see an ad and
-          deliver advertising relevant to your interests.
+          Cookies are small text files stored on your device by your web
+          browser. {SITE_NAME} itself does not set cookies to operate its tools.
+          However, our advertising and analytics partners may place cookies, web
+          beacons and similar technologies on your device to store preferences,
+          measure ad performance, limit how often you see an ad and deliver
+          advertising relevant to your interests.
         </p>
         <p style={p}>
-          You can instruct your browser to refuse all or some cookies, or to alert you when cookies are being set, through
-          your browser settings. If you disable cookies, the tools on this site will continue to work normally, though some
-          advertising may be less relevant.
+          You can instruct your browser to refuse all or some cookies, or to
+          alert you when cookies are being set, through your browser settings.
+          If you disable cookies, the tools on this site will continue to work
+          normally, though some advertising may be less relevant.
         </p>
       </PolicySection>
 
       <PolicySection title="4. Google AdSense and the DoubleClick DART Cookie">
         <p style={p}>
-          We use Google AdSense to display advertisements. Google is a third-party vendor that uses cookies to serve ads on
-          our site. Google's use of advertising cookies, including the DoubleClick DART cookie, enables Google and its
-          partners to serve ads to you based on your visit to this site and/or other sites on the Internet.
+          We use Google AdSense to display advertisements. Google is a
+          third-party vendor that uses cookies to serve ads on our site.
+          Google's use of advertising cookies, including the DoubleClick DART
+          cookie, enables Google and its partners to serve ads to you based on
+          your visit to this site and/or other sites on the Internet.
         </p>
         <ul style={ul}>
-          <li>Third-party vendors, including Google, use cookies to serve ads based on a user's prior visits to this website or other websites.</li>
-          <li>Google's use of advertising cookies enables it and its partners to serve ads to users based on their visits to this and/or other sites on the Internet.</li>
+          <li>
+            Third-party vendors, including Google, use cookies to serve ads
+            based on a user's prior visits to this website or other websites.
+          </li>
+          <li>
+            Google's use of advertising cookies enables it and its partners to
+            serve ads to users based on their visits to this and/or other sites
+            on the Internet.
+          </li>
           <li>
             You may opt out of personalized advertising by visiting{" "}
-            <ExtLink href="https://adssettings.google.com">Google Ads Settings</ExtLink>. Alternatively, you can opt out of
-            some third-party vendors' use of cookies for personalized advertising by visiting{" "}
-            <ExtLink href="https://www.aboutads.info/choices/">www.aboutads.info</ExtLink>.
+            <ExtLink href="https://adssettings.google.com">
+              Google Ads Settings
+            </ExtLink>
+            . Alternatively, you can opt out of some third-party vendors' use of
+            cookies for personalized advertising by visiting{" "}
+            <ExtLink href="https://www.aboutads.info/choices/">
+              www.aboutads.info
+            </ExtLink>
+            .
           </li>
           <li>
             Learn more about how Google uses data at{" "}
@@ -1154,103 +1652,130 @@ function PrivacyTerms() {
 
       <PolicySection title="5. Third-Party Vendors and Advertising Partners">
         <p style={p}>
-          In addition to Google, we may work with other third-party ad networks, affiliate programs and sponsors (for
-          example, cloud hosting partners featured in our "Sponsored" placements). These third parties may use cookies,
-          JavaScript or web beacons in their advertisements and links, which are sent directly to your browser. They
-          automatically receive your IP address when this occurs.
+          In addition to Google, we may work with other third-party ad networks,
+          affiliate programs and sponsors (for example, cloud hosting partners
+          featured in our "Sponsored" placements). These third parties may use
+          cookies, JavaScript or web beacons in their advertisements and links,
+          which are sent directly to your browser. They automatically receive
+          your IP address when this occurs.
         </p>
         <p style={p}>
-          {SITE_NAME} has no access to or control over cookies used by third-party advertisers. Please consult the
-          respective privacy policies of these third-party ad servers for detailed information on their practices and for
-          instructions on opting out. Some links on this site are affiliate or sponsored links, which means we may earn a
+          {SITE_NAME} has no access to or control over cookies used by
+          third-party advertisers. Please consult the respective privacy
+          policies of these third-party ad servers for detailed information on
+          their practices and for instructions on opting out. Some links on this
+          site are affiliate or sponsored links, which means we may earn a
           commission if you make a purchase — at no additional cost to you.
         </p>
         <p style={p}>
-          Users in the European Economic Area, the United Kingdom and Switzerland can manage additional preferences at{" "}
-          <ExtLink href="https://www.youronlinechoices.eu/">www.youronlinechoices.eu</ExtLink>. Where required by law, we
-          request your consent through a consent-management banner before personalized advertising cookies are set.
+          Users in the European Economic Area, the United Kingdom and
+          Switzerland can manage additional preferences at{" "}
+          <ExtLink href="https://www.youronlinechoices.eu/">
+            www.youronlinechoices.eu
+          </ExtLink>
+          . Where required by law, we request your consent through a
+          consent-management banner before personalized advertising cookies are
+          set.
         </p>
       </PolicySection>
 
       <PolicySection title="6. Your Data Protection Rights (GDPR & CCPA/CPRA)">
         <p style={p}>
-          Depending on where you live, you may have the right to access, correct, delete or restrict processing of personal
-          data held about you, to object to processing, to data portability and to withdraw consent at any time. California
-          residents may request disclosure of the categories of personal information collected and may opt out of the
-          "sale" or "sharing" of personal information for cross-context behavioral advertising. We do not sell personal
-          information. Because tool data is processed only on your device, we hold no such data to disclose or delete. To
-          exercise any other right, contact us at the address below; we will respond within the time required by law.
+          Depending on where you live, you may have the right to access,
+          correct, delete or restrict processing of personal data held about
+          you, to object to processing, to data portability and to withdraw
+          consent at any time. California residents may request disclosure of
+          the categories of personal information collected and may opt out of
+          the "sale" or "sharing" of personal information for cross-context
+          behavioral advertising. We do not sell personal information. Because
+          tool data is processed only on your device, we hold no such data to
+          disclose or delete. To exercise any other right, contact us at the
+          address below; we will respond within the time required by law.
         </p>
       </PolicySection>
 
       <PolicySection title="7. Children's Privacy">
         <p style={p}>
-          This website is not directed at children under the age of 13 (or 16 in the EEA), and we do not knowingly collect
-          personal information from children. If you believe a child has provided personal information through our site,
-          please contact us and we will promptly remove it.
+          This website is not directed at children under the age of 13 (or 16 in
+          the EEA), and we do not knowingly collect personal information from
+          children. If you believe a child has provided personal information
+          through our site, please contact us and we will promptly remove it.
         </p>
       </PolicySection>
 
       <PolicySection title="8. Changes to This Policy">
         <p style={p}>
-          We may update this Privacy Policy from time to time. Changes take effect when posted on this page with a revised
-          effective date. We encourage you to review this page periodically.
+          We may update this Privacy Policy from time to time. Changes take
+          effect when posted on this page with a revised effective date. We
+          encourage you to review this page periodically.
         </p>
       </PolicySection>
 
-      <h2 style={{ fontSize: 22, color: C.blue, margin: "40px 0 20px" }}>Terms of Use</h2>
+      <h2 style={{ fontSize: 22, color: C.blue, margin: "40px 0 20px" }}>
+        Terms of Use
+      </h2>
 
       <PolicySection title="1. Acceptance of Terms">
         <p style={p}>
-          By accessing {SITE_NAME} you agree to be bound by these Terms of Use and all applicable laws and regulations. If
-          you do not agree with any part of these terms, you are prohibited from using the site.
+          By accessing {SITE_NAME} you agree to be bound by these Terms of Use
+          and all applicable laws and regulations. If you do not agree with any
+          part of these terms, you are prohibited from using the site.
         </p>
       </PolicySection>
 
       <PolicySection title="2. Use License">
         <p style={p}>
-          You may use the tools on this site free of charge for personal and commercial purposes. You may not attempt to
-          disrupt the site, scrape it in a way that degrades service for others, remove proprietary notices, or use the
-          site for any unlawful purpose.
+          You may use the tools on this site free of charge for personal and
+          commercial purposes. You may not attempt to disrupt the site, scrape
+          it in a way that degrades service for others, remove proprietary
+          notices, or use the site for any unlawful purpose.
         </p>
       </PolicySection>
 
       <PolicySection title="3. Disclaimer of Warranties">
         <p style={p}>
-          All tools and content are provided "as is" and "as available", without warranties of any kind, express or
-          implied, including warranties of merchantability, fitness for a particular purpose or non-infringement. You are
-          solely responsible for verifying generated output (such as cron expressions and converted data) before relying
-          on it in production systems.
+          All tools and content are provided "as is" and "as available", without
+          warranties of any kind, express or implied, including warranties of
+          merchantability, fitness for a particular purpose or non-infringement.
+          You are solely responsible for verifying generated output (such as
+          cron expressions and converted data) before relying on it in
+          production systems.
         </p>
       </PolicySection>
 
       <PolicySection title="4. Limitation of Liability">
         <p style={p}>
-          In no event shall {SITE_NAME} or its operators be liable for any damages — including loss of data, profit or
-          business interruption — arising from the use of or inability to use the site, even if we have been advised of the
-          possibility of such damage.
+          In no event shall {SITE_NAME} or its operators be liable for any
+          damages — including loss of data, profit or business interruption —
+          arising from the use of or inability to use the site, even if we have
+          been advised of the possibility of such damage.
         </p>
       </PolicySection>
 
       <PolicySection title="5. Third-Party Links and Advertising">
         <p style={p}>
-          The site contains advertisements and links to third-party websites that are not operated by us. We are not
-          responsible for the content, products, services or privacy practices of those sites, and inclusion of a link
-          does not imply endorsement.
+          The site contains advertisements and links to third-party websites
+          that are not operated by us. We are not responsible for the content,
+          products, services or privacy practices of those sites, and inclusion
+          of a link does not imply endorsement.
         </p>
       </PolicySection>
 
       <PolicySection title="6. Modifications">
         <p style={p}>
-          We may revise these Terms of Use at any time without notice. By continuing to use the site you agree to be bound
-          by the then-current version.
+          We may revise these Terms of Use at any time without notice. By
+          continuing to use the site you agree to be bound by the then-current
+          version.
         </p>
       </PolicySection>
 
       <PolicySection title="Contact Us">
         <p style={p}>
           Questions about this Privacy Policy or Terms of Use can be sent to{" "}
-          <a href={`mailto:${CONTACT_EMAIL}`} style={linkStyle}>{CONTACT_EMAIL}</a>.
+          <a href={`mailto:${CONTACT_EMAIL}`} style={linkStyle}>
+            {CONTACT_EMAIL}
+          </a>
+          .
         </p>
       </PolicySection>
     </article>
@@ -1264,7 +1789,17 @@ function ThemeToggle({ theme, onToggle }) {
   const isDark = theme === "dark";
   return (
     <div className="theme-toggle" style={{ padding: "0 4px" }}>
-      <span style={{ ...S.label, fontSize: 11, padding: "0 8px", marginBottom: 8, color: C.faint }}>Appearance</span>
+      <span
+        style={{
+          ...S.label,
+          fontSize: 11,
+          padding: "0 8px",
+          marginBottom: 8,
+          color: C.faint,
+        }}
+      >
+        Appearance
+      </span>
       <button
         type="button"
         role="switch"
@@ -1349,7 +1884,13 @@ function Sidebar({ activeTab, onSelect, theme, onToggleTheme }) {
           e.preventDefault();
           onSelect("cron");
         }}
-        style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 8px", textDecoration: "none" }}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "0 8px",
+          textDecoration: "none",
+        }}
       >
         <span
           aria-hidden="true"
@@ -1368,14 +1909,33 @@ function Sidebar({ activeTab, onSelect, theme, onToggleTheme }) {
         >
           {"</>"}
         </span>
-        <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
-          <span style={{ fontWeight: 700, color: C.text, fontSize: 15 }}>{SITE_NAME}</span>
-          <span style={{ fontSize: 11, color: C.green }}>● 100% client-side</span>
+        <span
+          style={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}
+        >
+          <span style={{ fontWeight: 700, color: C.text, fontSize: 15 }}>
+            {SITE_NAME}
+          </span>
+          <span style={{ fontSize: 11, color: C.green }}>
+            ● 100% client-side
+          </span>
         </span>
       </a>
 
-      <nav aria-label="Tools" style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        <span style={{ ...S.label, fontSize: 11, padding: "0 12px", marginBottom: 4, color: C.faint }}>Workspace</span>
+      <nav
+        aria-label="Tools"
+        style={{ display: "flex", flexDirection: "column", gap: 4 }}
+      >
+        <span
+          style={{
+            ...S.label,
+            fontSize: 11,
+            padding: "0 12px",
+            marginBottom: 4,
+            color: C.faint,
+          }}
+        >
+          Workspace
+        </span>
         {TABS.map((t) => {
           const active = t.id === activeTab;
           return (
@@ -1424,7 +1984,9 @@ export default function App() {
   // Apply the theme to <html> (CSS variables + native form controls) and remember the choice.
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? "#09090b" : "#fafafa");
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", theme === "dark" ? "#09090b" : "#fafafa");
     try {
       localStorage.setItem(THEME_KEY, theme);
     } catch {
@@ -1432,7 +1994,10 @@ export default function App() {
     }
   }, [theme]);
 
-  const toggleTheme = useCallback(() => setTheme((t) => (t === "dark" ? "light" : "dark")), []);
+  const toggleTheme = useCallback(
+    () => setTheme((t) => (t === "dark" ? "light" : "dark")),
+    [],
+  );
 
   // Keep the URL hash in sync so each tool has a shareable, bookmarkable address.
   useEffect(() => {
@@ -1445,13 +2010,18 @@ export default function App() {
   useEffect(() => {
     const tab = TABS.find((t) => t.id === activeTab);
     document.title = `${tab.title} | ${SITE_NAME}`;
-    document.querySelector('meta[name="description"]')?.setAttribute("content", tab.description);
-    document.querySelector('link[rel="canonical"]')?.setAttribute("href", `${SITE_URL}/#${tab.id}`);
+    document
+      .querySelector('meta[name="description"]')
+      ?.setAttribute("content", tab.description);
+    document
+      .querySelector('link[rel="canonical"]')
+      ?.setAttribute("href", `${SITE_URL}/#${tab.id}`);
   }, [activeTab]);
 
   const selectTab = useCallback((id) => {
     setActiveTab(id);
-    if (window.location.hash !== `#${id}`) window.history.pushState(null, "", `#${id}`);
+    if (window.location.hash !== `#${id}`)
+      window.history.pushState(null, "", `#${id}`);
     window.scrollTo({ top: 0 });
   }, []);
 
@@ -1464,16 +2034,36 @@ export default function App() {
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.textSoft }}>
-      <Sidebar activeTab={activeTab} onSelect={selectTab} theme={theme} onToggleTheme={toggleTheme} />
+      <Sidebar
+        activeTab={activeTab}
+        onSelect={selectTab}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
 
       {/* Full-height flex column: the content area grows, so the footer always lands at the bottom of the page. */}
       <main
         className="app-main"
-        style={{ marginLeft: 260, padding: "28px 40px 0", minWidth: 0, minHeight: "100vh", display: "flex", flexDirection: "column" }}
+        style={{
+          marginLeft: 260,
+          padding: "28px 40px 0",
+          minWidth: 0,
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
+        }}
       >
         <AdLeaderboard />
 
-        <div style={{ flex: 1, width: "100%", maxWidth: 1100, margin: "0 auto", paddingBottom: 56 }}>
+        <div
+          style={{
+            flex: 1,
+            width: "100%",
+            maxWidth: 1100,
+            margin: "0 auto",
+            paddingBottom: 56,
+          }}
+        >
           {/* Panels stay mounted (just hidden) so work in progress survives tab switches. */}
           <div hidden={activeTab !== "cron"}>
             <CronScheduler notify={notify} />
@@ -1508,7 +2098,10 @@ export default function App() {
               gap: 12,
             }}
           >
-            <span>© {CURRENT_YEAR} {SITE_NAME}. All processing happens locally in your browser.</span>
+            <span>
+              © {CURRENT_YEAR} {SITE_NAME}. All processing happens locally in
+              your browser.
+            </span>
             <a
               href="#privacy"
               onClick={(e) => {
