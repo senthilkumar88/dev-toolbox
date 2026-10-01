@@ -4038,7 +4038,7 @@ function PrivacyTerms() {
         </p>
       </PolicySection>
 
-      <PolicySection title="Contact Us">
+      {/* <PolicySection title="Contact Us">
         <p style={p}>
           Questions about this Privacy Policy or Terms of Use can be sent to{" "}
           <a href={`mailto:${CONTACT_EMAIL}`} style={linkStyle}>
@@ -4046,7 +4046,7 @@ function PrivacyTerms() {
           </a>
           .
         </p>
-      </PolicySection>
+      </PolicySection> */}
     </article>
   );
 }
