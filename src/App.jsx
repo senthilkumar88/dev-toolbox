@@ -10,7 +10,7 @@ import {
 /* ==========================================================================
    Site configuration — replace the placeholders before going live.
    ========================================================================== */
-const SITE_NAME = "DevStudio Tools";
+const SITE_NAME = "ZenSyntax Studio";
 const SITE_URL = "https://www.yourdomain.com";
 const CONTACT_EMAIL = "privacy@yourdomain.com";
 const POLICY_EFFECTIVE_DATE = "September 30, 2026";
@@ -57,7 +57,7 @@ const TABS = [
     label: "String to JSON Converter",
     title: "JSON String Escape & Unescape — Convert Text to a JSON-Safe String",
     description:
-      "Escape multi-line text, HTML or logs into a single-line JSON-safe string, or unescape \\n, \\t, \\\" and \\uXXXX sequences back to raw text. Runs entirely in your browser.",
+      'Escape multi-line text, HTML or logs into a single-line JSON-safe string, or unescape \\n, \\t, \\" and \\uXXXX sequences back to raw text. Runs entirely in your browser.',
   },
   {
     id: "privacy",
@@ -1525,8 +1525,10 @@ const SAMPLE_B = `{
   "license": "MIT"
 }`;
 
-const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
-const containerKind = (v) => (Array.isArray(v) ? "array" : isPlainObject(v) ? "object" : null);
+const isPlainObject = (v) =>
+  v !== null && typeof v === "object" && !Array.isArray(v);
+const containerKind = (v) =>
+  Array.isArray(v) ? "array" : isPlainObject(v) ? "object" : null;
 
 /** Key-order-independent serialization, used to test array elements for deep equality. */
 function canonical(v) {
@@ -1549,7 +1551,8 @@ function alignArrays(a, b) {
   const ha = a.map(canonical);
   const hb = b.map(canonical);
   let start = 0;
-  while (start < a.length && start < b.length && ha[start] === hb[start]) start++;
+  while (start < a.length && start < b.length && ha[start] === hb[start])
+    start++;
   let endA = a.length;
   let endB = b.length;
   while (endA > start && endB > start && ha[endA - 1] === hb[endB - 1]) {
@@ -1592,7 +1595,8 @@ function alignArrays(a, b) {
     for (let j = 0; j < m; j++) ops.push(["add", start + j]);
   }
 
-  for (let k = 0; k < a.length - endA; k++) ops.push(["eq", endA + k, endB + k]);
+  for (let k = 0; k < a.length - endA; k++)
+    ops.push(["eq", endA + k, endB + k]);
   return ops;
 }
 
@@ -1601,7 +1605,10 @@ function emitValue(out, type, value, prefix, indent, comma) {
   const rows = JSON.stringify(value, null, 2).split("\n");
   const lead = "  ".repeat(indent);
   rows.forEach((row, i) => {
-    const text = (i === 0 ? prefix : "") + row + (i === rows.length - 1 && comma ? "," : "");
+    const text =
+      (i === 0 ? prefix : "") +
+      row +
+      (i === rows.length - 1 && comma ? "," : "");
     out.push({ type, text: lead + text });
   });
 }
@@ -1630,13 +1637,36 @@ function diffNode(a, b, key, indent, commaA, commaB, out, stats) {
         const inA = Object.hasOwn(a, k);
         const inB = Object.hasOwn(b, k);
         if (inA && inB) {
-          diffNode(a[k], b[k], k, indent + 1, k !== lastA, k !== lastB, out, stats);
+          diffNode(
+            a[k],
+            b[k],
+            k,
+            indent + 1,
+            k !== lastA,
+            k !== lastB,
+            out,
+            stats,
+          );
         } else if (inA) {
           stats.removed++;
-          emitValue(out, "del", a[k], `${JSON.stringify(k)}: `, indent + 1, k !== lastA);
+          emitValue(
+            out,
+            "del",
+            a[k],
+            `${JSON.stringify(k)}: `,
+            indent + 1,
+            k !== lastA,
+          );
         } else {
           stats.added++;
-          emitValue(out, "add", b[k], `${JSON.stringify(k)}: `, indent + 1, k !== lastB);
+          emitValue(
+            out,
+            "add",
+            b[k],
+            `${JSON.stringify(k)}: `,
+            indent + 1,
+            k !== lastB,
+          );
         }
       }
     } else {
@@ -1662,9 +1692,22 @@ function diffNode(a, b, key, indent, commaA, commaB, out, stats) {
         for (let p = 0; p < Math.max(hunkDels.length, hunkAdds.length); p++) {
           const i = hunkDels[p];
           const j = hunkAdds[p];
-          if (p < pairs && containerKind(a[i]) && containerKind(a[i]) === containerKind(b[j])) {
+          if (
+            p < pairs &&
+            containerKind(a[i]) &&
+            containerKind(a[i]) === containerKind(b[j])
+          ) {
             flush();
-            diffNode(a[i], b[j], null, indent + 1, i < a.length - 1, j < b.length - 1, out, stats);
+            diffNode(
+              a[i],
+              b[j],
+              null,
+              indent + 1,
+              i < a.length - 1,
+              j < b.length - 1,
+              out,
+              stats,
+            );
           } else {
             if (i !== undefined) dels.push(i);
             if (j !== undefined) adds.push(j);
@@ -1726,12 +1769,17 @@ function describeJsonError(err, text) {
 }
 
 function parsePanel(text, panel) {
-  if (!text.trim()) return { error: `Panel ${panel} is empty — paste a JSON document to compare.` };
+  if (!text.trim())
+    return {
+      error: `Panel ${panel} is empty — paste a JSON document to compare.`,
+    };
   try {
     // JSON.parse is a pure data parser (no code execution), so untrusted input is safe here.
     return { value: JSON.parse(text) };
   } catch (err) {
-    return { error: `Invalid JSON format syntax detected in Panel ${panel}: ${describeJsonError(err, text)}` };
+    return {
+      error: `Invalid JSON format syntax detected in Panel ${panel}: ${describeJsonError(err, text)}`,
+    };
   }
 }
 
@@ -1746,11 +1794,19 @@ function compareJson(textA, textB) {
     diffNode(pa.value, pb.value, null, 0, false, false, lines, stats);
   } catch (err) {
     if (err instanceof RangeError) {
-      return { errors: { A: "These documents are nested too deeply to compare in the browser." } };
+      return {
+        errors: {
+          A: "These documents are nested too deeply to compare in the browser.",
+        },
+      };
     }
     throw err;
   }
-  return { lines: numberLines(lines), stats, identical: stats.added + stats.removed + stats.changed === 0 };
+  return {
+    lines: numberLines(lines),
+    stats,
+    identical: stats.added + stats.removed + stats.changed === 0,
+  };
 }
 
 function JsonDiffChecker({ notify }) {
@@ -1760,7 +1816,8 @@ function JsonDiffChecker({ notify }) {
   const [compared, setCompared] = useState(null);
   const outputRef = useRef(null);
 
-  const stale = result && compared && (compared.a !== left || compared.b !== right);
+  const stale =
+    result && compared && (compared.a !== left || compared.b !== right);
   const errors = result?.errors;
 
   const handleCompare = () => {
@@ -1770,7 +1827,11 @@ function JsonDiffChecker({ notify }) {
 
   // Bring the banner or diff into view after each comparison.
   useEffect(() => {
-    if (result) outputRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (result)
+      outputRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
   }, [result]);
 
   const handleKeyDown = (e) => {
@@ -1823,25 +1884,53 @@ function JsonDiffChecker({ notify }) {
 
   const smallBtn = { ...S.btn("ghost"), padding: "5px 10px", fontSize: 12 };
   const shownLines = result?.lines ? result.lines.slice(0, MAX_DIFF_LINES) : [];
-  const rowBg = { add: tint(DIFF_GREEN, 14), del: tint(DIFF_RED, 14), same: "transparent" };
+  const rowBg = {
+    add: tint(DIFF_GREEN, 14),
+    del: tint(DIFF_RED, 14),
+    same: "transparent",
+  };
   const signColor = { add: DIFF_GREEN, del: DIFF_RED, same: C.faint };
   const sign = { add: "+", del: "-", same: " " };
 
   return (
     <section aria-labelledby="diff-title">
-      <h1 id="diff-title" style={S.h1}>JSON Diff Checker</h1>
+      <h1 id="diff-title" style={S.h1}>
+        JSON Diff Checker
+      </h1>
       <p style={S.lead}>
-        Paste two JSON documents to see every added, removed and changed key in a structural diff. Key order is
-        ignored; everything runs locally in your browser.
+        Paste two JSON documents to see every added, removed and changed key in
+        a structural diff. Key order is ignored; everything runs locally in your
+        browser.
       </p>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+          gap: 20,
+        }}
+      >
         {[
-          { id: "json-a", label: "Original JSON (A)", value: left, set: setLeft, error: errors?.A },
-          { id: "json-b", label: "Modified JSON (B)", value: right, set: setRight, error: errors?.B },
+          {
+            id: "json-a",
+            label: "Original JSON (A)",
+            value: left,
+            set: setLeft,
+            error: errors?.A,
+          },
+          {
+            id: "json-b",
+            label: "Modified JSON (B)",
+            value: right,
+            set: setRight,
+            error: errors?.B,
+          },
         ].map((p) => (
           <div key={p.id} style={{ ...S.card, minWidth: 0 }}>
-            <label htmlFor={p.id} style={{ ...S.label, color: p.error ? DIFF_RED : C.muted }}>
+            <label
+              htmlFor={p.id}
+              style={{ ...S.label, color: p.error ? DIFF_RED : C.muted }}
+            >
               {p.label}
             </label>
             <textarea
@@ -1858,23 +1947,67 @@ function JsonDiffChecker({ notify }) {
         ))}
       </div>
 
-      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, marginTop: 20 }}>
-        <button type="button" className="btn-primary" style={{ ...S.btn("primary"), padding: "12px 22px", fontSize: 15 }} onClick={handleCompare}>
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          gap: 10,
+          marginTop: 20,
+        }}
+      >
+        <button
+          type="button"
+          className="btn-primary"
+          style={{ ...S.btn("primary"), padding: "12px 22px", fontSize: 15 }}
+          onClick={handleCompare}
+        >
           🔍 Compare JSON Files
         </button>
-        <button type="button" className="btn-ghost" style={smallBtn} onClick={() => { setLeft(SAMPLE_A); setRight(SAMPLE_B); }}>
+        <button
+          type="button"
+          className="btn-ghost"
+          style={smallBtn}
+          onClick={() => {
+            setLeft(SAMPLE_A);
+            setRight(SAMPLE_B);
+          }}
+        >
           Load sample
         </button>
-        <button type="button" className="btn-ghost" style={smallBtn} onClick={() => { setLeft(right); setRight(left); }} disabled={!left && !right}>
+        <button
+          type="button"
+          className="btn-ghost"
+          style={smallBtn}
+          onClick={() => {
+            setLeft(right);
+            setRight(left);
+          }}
+          disabled={!left && !right}
+        >
           Swap A ⇄ B
         </button>
-        <button type="button" className="btn-ghost" style={smallBtn} onClick={handleFormat} disabled={!left && !right}>
+        <button
+          type="button"
+          className="btn-ghost"
+          style={smallBtn}
+          onClick={handleFormat}
+          disabled={!left && !right}
+        >
           Format both
         </button>
-        <button type="button" className="btn-ghost" style={smallBtn} onClick={handleClear} disabled={!left && !right && !result}>
+        <button
+          type="button"
+          className="btn-ghost"
+          style={smallBtn}
+          onClick={handleClear}
+          disabled={!left && !right && !result}
+        >
           Clear
         </button>
-        <span style={{ fontSize: 12, color: C.faint, marginLeft: "auto" }}>Tip: Ctrl + Enter compares</span>
+        <span style={{ fontSize: 12, color: C.faint, marginLeft: "auto" }}>
+          Tip: Ctrl + Enter compares
+        </span>
       </div>
 
       <div ref={outputRef} style={{ marginTop: 20, scrollMarginTop: 20 }}>
@@ -1895,9 +2028,19 @@ function JsonDiffChecker({ notify }) {
             }}
           >
             {[errors.A, errors.B].filter(Boolean).map((msg) => (
-              <div key={msg} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                <span aria-hidden="true" style={{ color: DIFF_RED, fontWeight: 700 }}>⛔</span>
-                <span style={{ fontWeight: 500, overflowWrap: "anywhere" }}>{msg}</span>
+              <div
+                key={msg}
+                style={{ display: "flex", gap: 10, alignItems: "flex-start" }}
+              >
+                <span
+                  aria-hidden="true"
+                  style={{ color: DIFF_RED, fontWeight: 700 }}
+                >
+                  ⛔
+                </span>
+                <span style={{ fontWeight: 500, overflowWrap: "anywhere" }}>
+                  {msg}
+                </span>
               </div>
             ))}
           </div>
@@ -1905,17 +2048,68 @@ function JsonDiffChecker({ notify }) {
 
         {result?.lines && (
           <div style={{ ...S.card, minWidth: 0 }}>
-            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 10,
+                marginBottom: 12,
+              }}
+            >
               <span style={{ ...S.label, marginBottom: 0 }}>Diff output</span>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, fontFamily: MONO, fontSize: 12, fontWeight: 600 }}>
-                {stale && <span style={{ color: C.amber }}>inputs changed — compare again</span>}
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 8,
+                  fontFamily: MONO,
+                  fontSize: 12,
+                  fontWeight: 600,
+                }}
+              >
+                {stale && (
+                  <span style={{ color: C.amber }}>
+                    inputs changed — compare again
+                  </span>
+                )}
                 {result.identical ? (
-                  <span style={{ color: DIFF_GREEN }}>✓ No differences — documents are identical</span>
+                  <span style={{ color: DIFF_GREEN }}>
+                    ✓ No differences — documents are identical
+                  </span>
                 ) : (
                   <>
-                    <span style={{ padding: "2px 8px", borderRadius: 6, background: tint(DIFF_GREEN, 14), color: DIFF_GREEN }}>+{result.stats.added} added</span>
-                    <span style={{ padding: "2px 8px", borderRadius: 6, background: tint(DIFF_RED, 14), color: DIFF_RED }}>-{result.stats.removed} removed</span>
-                    <span style={{ padding: "2px 8px", borderRadius: 6, background: tint(C.amber, 14), color: C.amber }}>~{result.stats.changed} changed</span>
+                    <span
+                      style={{
+                        padding: "2px 8px",
+                        borderRadius: 6,
+                        background: tint(DIFF_GREEN, 14),
+                        color: DIFF_GREEN,
+                      }}
+                    >
+                      +{result.stats.added} added
+                    </span>
+                    <span
+                      style={{
+                        padding: "2px 8px",
+                        borderRadius: 6,
+                        background: tint(DIFF_RED, 14),
+                        color: DIFF_RED,
+                      }}
+                    >
+                      -{result.stats.removed} removed
+                    </span>
+                    <span
+                      style={{
+                        padding: "2px 8px",
+                        borderRadius: 6,
+                        background: tint(C.amber, 14),
+                        color: C.amber,
+                      }}
+                    >
+                      ~{result.stats.changed} changed
+                    </span>
                   </>
                 )}
               </div>
@@ -1939,9 +2133,18 @@ function JsonDiffChecker({ notify }) {
                 transition: "opacity 0.15s",
               }}
             >
-              <div style={{ width: "max-content", minWidth: "100%", padding: "8px 0" }}>
+              <div
+                style={{
+                  width: "max-content",
+                  minWidth: "100%",
+                  padding: "8px 0",
+                }}
+              >
                 {shownLines.map((l, i) => (
-                  <div key={i} style={{ display: "flex", background: rowBg[l.type] }}>
+                  <div
+                    key={i}
+                    style={{ display: "flex", background: rowBg[l.type] }}
+                  >
                     <span
                       aria-hidden="true"
                       style={{
@@ -1955,13 +2158,46 @@ function JsonDiffChecker({ notify }) {
                         userSelect: "none",
                       }}
                     >
-                      <span style={{ width: 44, textAlign: "right", paddingRight: 8 }}>{l.aNo ?? ""}</span>
-                      <span style={{ width: 44, textAlign: "right", paddingRight: 8 }}>{l.bNo ?? ""}</span>
+                      <span
+                        style={{
+                          width: 44,
+                          textAlign: "right",
+                          paddingRight: 8,
+                        }}
+                      >
+                        {l.aNo ?? ""}
+                      </span>
+                      <span
+                        style={{
+                          width: 44,
+                          textAlign: "right",
+                          paddingRight: 8,
+                        }}
+                      >
+                        {l.bNo ?? ""}
+                      </span>
                     </span>
-                    <span style={{ width: 24, flexShrink: 0, textAlign: "center", color: signColor[l.type], fontWeight: 700, userSelect: "none" }}>
+                    <span
+                      style={{
+                        width: 24,
+                        flexShrink: 0,
+                        textAlign: "center",
+                        color: signColor[l.type],
+                        fontWeight: 700,
+                        userSelect: "none",
+                      }}
+                    >
                       {sign[l.type]}
                     </span>
-                    <span style={{ whiteSpace: "pre", paddingRight: 16, color: l.type === "same" ? C.muted : C.text }}>{l.text}</span>
+                    <span
+                      style={{
+                        whiteSpace: "pre",
+                        paddingRight: 16,
+                        color: l.type === "same" ? C.muted : C.text,
+                      }}
+                    >
+                      {l.text}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -1969,7 +2205,9 @@ function JsonDiffChecker({ notify }) {
 
             {result.lines.length > MAX_DIFF_LINES && (
               <p style={{ margin: "10px 0 0", fontSize: 12.5, color: C.amber }}>
-                ⚠ Showing the first {MAX_DIFF_LINES.toLocaleString()} of {result.lines.length.toLocaleString()} lines. The change counts above cover the whole document.
+                ⚠ Showing the first {MAX_DIFF_LINES.toLocaleString()} of{" "}
+                {result.lines.length.toLocaleString()} lines. The change counts
+                above cover the whole document.
               </p>
             )}
           </div>
@@ -2035,7 +2273,11 @@ function tidySelector(raw, lead) {
     if (depth === 0 && c === ",") {
       parts.push(cur.trim());
       cur = "";
-    } else if (depth === 0 && (c === ">" || c === "+" || c === "~") && s[i + 1] !== "=") {
+    } else if (
+      depth === 0 &&
+      (c === ">" || c === "+" || c === "~") &&
+      s[i + 1] !== "="
+    ) {
       cur = `${cur.trimEnd()} ${c} `;
       while (s[i + 1] === " ") i++;
     } else {
@@ -2051,7 +2293,9 @@ function tidyDeclaration(raw) {
   const s = collapseCss(raw);
   if (s.startsWith("@") || s.startsWith("/*")) return s;
   const colon = s.indexOf(":");
-  return colon < 0 ? s : `${s.slice(0, colon).trim()}: ${s.slice(colon + 1).trim()}`;
+  return colon < 0
+    ? s
+    : `${s.slice(0, colon).trim()}: ${s.slice(colon + 1).trim()}`;
 }
 
 function formatCss(src, unit = "  ") {
@@ -2111,15 +2355,118 @@ function formatCss(src, unit = "  ") {
 }
 
 /* ---------- JavaScript ---------- */
-const JS_PUNCTUATORS = [">>>=", "...", "===", "!==", "**=", "<<=", ">>=", ">>>", "&&=", "||=", "??=", "=>", "==", "!=", "<=", ">=", "&&", "||", "??", "?.", "++", "--", "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", "**", "<<", ">>"];
+const JS_PUNCTUATORS = [
+  ">>>=",
+  "...",
+  "===",
+  "!==",
+  "**=",
+  "<<=",
+  ">>=",
+  ">>>",
+  "&&=",
+  "||=",
+  "??=",
+  "=>",
+  "==",
+  "!=",
+  "<=",
+  ">=",
+  "&&",
+  "||",
+  "??",
+  "?.",
+  "++",
+  "--",
+  "+=",
+  "-=",
+  "*=",
+  "/=",
+  "%=",
+  "&=",
+  "|=",
+  "^=",
+  "**",
+  "<<",
+  ">>",
+];
 // Keywords after which an operand (not an operator) is expected.
-const JS_OPERAND_KEYWORDS = new Set(["return", "typeof", "instanceof", "in", "of", "new", "delete", "void", "throw", "case", "do", "else", "yield", "await", "extends"]);
-const JS_SPACE_BEFORE_PAREN = new Set([...JS_OPERAND_KEYWORDS, "if", "for", "while", "switch", "catch", "with", "function", "async"]);
+const JS_OPERAND_KEYWORDS = new Set([
+  "return",
+  "typeof",
+  "instanceof",
+  "in",
+  "of",
+  "new",
+  "delete",
+  "void",
+  "throw",
+  "case",
+  "do",
+  "else",
+  "yield",
+  "await",
+  "extends",
+]);
+const JS_SPACE_BEFORE_PAREN = new Set([
+  ...JS_OPERAND_KEYWORDS,
+  "if",
+  "for",
+  "while",
+  "switch",
+  "catch",
+  "with",
+  "function",
+  "async",
+]);
 // A `{` after these words opens an object/pattern rather than a block.
-const JS_OBJECT_AFTER_WORD = new Set(["return", "default", "yield", "await", "typeof", "in", "of", "case", "const", "let", "var", "import", "export", "throw"]);
+const JS_OBJECT_AFTER_WORD = new Set([
+  "return",
+  "default",
+  "yield",
+  "await",
+  "typeof",
+  "in",
+  "of",
+  "case",
+  "const",
+  "let",
+  "var",
+  "import",
+  "export",
+  "throw",
+]);
 // Words that can't end a statement, so a following line break is never an ASI boundary.
-const JS_NO_BREAK_AFTER_WORD = new Set(["else", "do", "typeof", "new", "void", "delete", "await", "const", "let", "var", "function", "class", "extends", "in", "of", "instanceof", "case", "async", "import", "export"]);
-const JS_CONTINUATION_WORDS = new Set(["else", "catch", "finally", "in", "of", "instanceof"]);
+const JS_NO_BREAK_AFTER_WORD = new Set([
+  "else",
+  "do",
+  "typeof",
+  "new",
+  "void",
+  "delete",
+  "await",
+  "const",
+  "let",
+  "var",
+  "function",
+  "class",
+  "extends",
+  "in",
+  "of",
+  "instanceof",
+  "case",
+  "async",
+  "import",
+  "export",
+]);
+const JS_CONTINUATION_WORDS = new Set([
+  "else",
+  "catch",
+  "finally",
+  "in",
+  "of",
+  "instanceof",
+]);
 
 function skipTemplate(src, i) {
   for (let j = i + 1; j < src.length; j++) {
@@ -2204,7 +2551,12 @@ function tokenizeJs(src) {
     } else if (/\d/.test(ch) || (ch === "." && /\d/.test(src[i + 1]))) {
       i++;
       const hex = /^0[xob]/i.test(src.slice(start, start + 2));
-      while (i < src.length && (/[\w.]/.test(src[i]) || (/[+-]/.test(src[i]) && !hex && /[eE]/.test(src[i - 1])))) i++;
+      while (
+        i < src.length &&
+        (/[\w.]/.test(src[i]) ||
+          (/[+-]/.test(src[i]) && !hex && /[eE]/.test(src[i - 1])))
+      )
+        i++;
       type = "number";
     } else if (ch === "/" && regexAllowed(lastSig)) {
       i = skipRegex(src, i);
@@ -2226,13 +2578,30 @@ function jsNeedsSpace(prev, cur) {
   if (!prev) return false;
   const v = cur.value;
   const p = prev.value;
-  if (cur.type === "punct" && [",", ";", ")", "]", ".", "?.", ":"].includes(v)) return false;
-  if ((prev.type === "punct" && ["(", "[", ".", "?.", "...", "!", "~"].includes(p)) || prev.unary) return false;
+  if (cur.type === "punct" && [",", ";", ")", "]", ".", "?.", ":"].includes(v))
+    return false;
+  if (
+    (prev.type === "punct" &&
+      ["(", "[", ".", "?.", "...", "!", "~"].includes(p)) ||
+    prev.unary
+  )
+    return false;
   if (cur.postfix) return false;
-  const isCallee = (prev.type === "word" && !JS_OPERAND_KEYWORDS.has(p)) || p === ")" || p === "]" || prev.type === "string" || prev.type === "template";
-  if (v === "(" && cur.type === "punct") return prev.type === "word" ? JS_SPACE_BEFORE_PAREN.has(p) : !isCallee;
+  const isCallee =
+    (prev.type === "word" && !JS_OPERAND_KEYWORDS.has(p)) ||
+    p === ")" ||
+    p === "]" ||
+    prev.type === "string" ||
+    prev.type === "template";
+  if (v === "(" && cur.type === "punct")
+    return prev.type === "word" ? JS_SPACE_BEFORE_PAREN.has(p) : !isCallee;
   if (v === "[" && cur.type === "punct") return !isCallee;
-  if (cur.type === "template" && prev.type === "word" && !JS_OPERAND_KEYWORDS.has(p)) return false; // tagged template
+  if (
+    cur.type === "template" &&
+    prev.type === "word" &&
+    !JS_OPERAND_KEYWORDS.has(p)
+  )
+    return false; // tagged template
   return true;
 }
 
@@ -2264,14 +2633,29 @@ function formatJs(src, unit = "  ") {
   const atStatementLevel = () => top().kind === "block";
   const endsExpression = (t) =>
     Boolean(t) &&
-    (t.type === "word" ? !JS_NO_BREAK_AFTER_WORD.has(t.value) : t.type !== "punct" || [")", "]", "}"].includes(t.value) || t.postfix);
+    (t.type === "word"
+      ? !JS_NO_BREAK_AFTER_WORD.has(t.value)
+      : t.type !== "punct" || [")", "]", "}"].includes(t.value) || t.postfix);
   const startsStatement = (t) =>
-    t.type === "word" ? !JS_CONTINUATION_WORDS.has(t.value) : ["number", "string", "template", "regex"].includes(t.type) || t.value === "++" || t.value === "--";
+    t.type === "word"
+      ? !JS_CONTINUATION_WORDS.has(t.value)
+      : ["number", "string", "template", "regex"].includes(t.type) ||
+        t.value === "++" ||
+        t.value === "--";
 
   const afterClose = (frame, next) => {
     if (!next) return newline();
-    if (next.type === "punct" && [")", "]", ",", ";", ".", "?.", "("].includes(next.value)) return;
-    if (next.type === "word" && (["else", "catch", "finally"].includes(next.value) || (next.value === "while" && frame.isDo))) return;
+    if (
+      next.type === "punct" &&
+      [")", "]", ",", ";", ".", "?.", "("].includes(next.value)
+    )
+      return;
+    if (
+      next.type === "word" &&
+      (["else", "catch", "finally"].includes(next.value) ||
+        (next.value === "while" && frame.isDo))
+    )
+      return;
     if (!atStatementLevel() || next.type === "punct") return; // mid-expression: keep flowing
     newline();
   };
@@ -2292,14 +2676,23 @@ function formatJs(src, unit = "  ") {
     }
 
     // Keep source line breaks that may be ASI statement boundaries, plus single blank lines.
-    if (t.nl > 0 && line && atStatementLevel() && endsExpression(prev) && startsStatement(t)) newline();
+    if (
+      t.nl > 0 &&
+      line &&
+      atStatementLevel() &&
+      endsExpression(prev) &&
+      startsStatement(t)
+    )
+      newline();
     if (t.nl > 1 && !line && atStatementLevel() && lines.length) blankLine();
 
     if (t.type === "punct") {
       if (v === "+" || v === "-" || v === "++" || v === "--") {
         const operandPosition =
           !prev ||
-          (prev.type === "punct" && ![")", "]", "}"].includes(prev.value) && !prev.postfix) ||
+          (prev.type === "punct" &&
+            ![")", "]", "}"].includes(prev.value) &&
+            !prev.postfix) ||
           (prev.type === "word" && JS_OPERAND_KEYWORDS.has(prev.value));
         if (v.length === 1 || operandPosition) t.unary = operandPosition;
         else t.postfix = true;
@@ -2311,12 +2704,14 @@ function formatJs(src, unit = "  ") {
     if (t.type === "punct" && v === "{") {
       const isObject =
         Boolean(prev) &&
-        ((prev.type === "punct" && ![")", "=>", ";", "}"].includes(prev.value)) ||
+        ((prev.type === "punct" &&
+          ![")", "=>", ";", "}"].includes(prev.value)) ||
           (prev.type === "word" && JS_OBJECT_AFTER_WORD.has(prev.value)));
       const frame = {
         kind: isObject ? "obj" : "block",
         q: 0,
-        isSwitch: !isObject && prev?.value === ")" && lastParenOwner === "switch",
+        isSwitch:
+          !isObject && prev?.value === ")" && lastParenOwner === "switch",
         isDo: prev?.value === "do",
       };
       write("{", jsNeedsSpace(prev, t));
@@ -2348,13 +2743,20 @@ function formatJs(src, unit = "  ") {
 
     if (t.type === "punct" && (v === "(" || v === "[")) {
       write(v, jsNeedsSpace(prev, t));
-      stack.push({ kind: v === "(" ? "paren" : "bracket", q: 0, owner: prev?.type === "word" ? prev.value : null });
+      stack.push({
+        kind: v === "(" ? "paren" : "bracket",
+        q: 0,
+        owner: prev?.type === "word" ? prev.value : null,
+      });
       prev = t;
       continue;
     }
 
     if (t.type === "punct" && (v === ")" || v === "]")) {
-      if (stack.length > 1 && (top().kind === "paren" || top().kind === "bracket")) {
+      if (
+        stack.length > 1 &&
+        (top().kind === "paren" || top().kind === "bracket")
+      ) {
         const frame = stack.pop();
         if (v === ")") lastParenOwner = frame.owner;
       }
@@ -2402,7 +2804,11 @@ function formatJs(src, unit = "  ") {
       continue;
     }
 
-    if (t.type === "word" && (v === "case" || v === "default") && top().isSwitch) {
+    if (
+      t.type === "word" &&
+      (v === "case" || v === "default") &&
+      top().isSwitch
+    ) {
       const f = top();
       newline();
       if (f.inCase) {
@@ -2423,7 +2829,22 @@ function formatJs(src, unit = "  ") {
 }
 
 /* ---------- HTML ---------- */
-const HTML_VOID = new Set(["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"]);
+const HTML_VOID = new Set([
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr",
+]);
 const HTML_RAW_TEXT = new Set(["script", "style", "pre", "textarea"]);
 const HTML_PRESERVE = new Set(["pre", "textarea"]); // whitespace is significant: emit verbatim
 const HTML_INLINE_MAX = 100;
@@ -2444,12 +2865,15 @@ function normalizeTag(raw) {
       out += c;
     }
   }
-  return out.replace(/^<\s+/, "<").replace(/\s+(\/?>)$/, (_, end) => (end === "/>" ? " />" : ">"));
+  return out
+    .replace(/^<\s+/, "<")
+    .replace(/\s+(\/?>)$/, (_, end) => (end === "/>" ? " />" : ">"));
 }
 
 function tokenizeHtml(src) {
   const toks = [];
-  const isTagStart = (j) => src[j] === "<" && /[A-Za-z!/?]/.test(src[j + 1] ?? "");
+  const isTagStart = (j) =>
+    src[j] === "<" && /[A-Za-z!/?]/.test(src[j + 1] ?? "");
   let i = 0;
   while (i < src.length) {
     if (src.startsWith("<!--", i)) {
@@ -2479,7 +2903,13 @@ function tokenizeHtml(src) {
       const name = m ? m[2].toLowerCase() : "";
       const closing = Boolean(m?.[1]);
       const selfClosing = /\/\s*>$/.test(raw) || HTML_VOID.has(name);
-      toks.push({ type: closing ? "close" : "open", name, value: normalizeTag(raw), selfClosing, rawTag: raw });
+      toks.push({
+        type: closing ? "close" : "open",
+        name,
+        value: normalizeTag(raw),
+        selfClosing,
+        rawTag: raw,
+      });
       if (!closing && !selfClosing && HTML_RAW_TEXT.has(name)) {
         const endTag = new RegExp(`</${name}\\s*>`, "i").exec(src.slice(i));
         const end = endTag ? i + endTag.index : src.length;
@@ -2496,7 +2926,52 @@ function tokenizeHtml(src) {
   return toks;
 }
 
-const HTML_BLOCK = new Set(["address", "article", "aside", "blockquote", "body", "dd", "details", "dialog", "div", "dl", "dt", "fieldset", "figcaption", "figure", "footer", "form", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hr", "html", "li", "main", "nav", "ol", "p", "section", "summary", "table", "tbody", "td", "tfoot", "th", "thead", "tr", "ul", "option", "optgroup", "select"]);
+const HTML_BLOCK = new Set([
+  "address",
+  "article",
+  "aside",
+  "blockquote",
+  "body",
+  "dd",
+  "details",
+  "dialog",
+  "div",
+  "dl",
+  "dt",
+  "fieldset",
+  "figcaption",
+  "figure",
+  "footer",
+  "form",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "head",
+  "header",
+  "hr",
+  "html",
+  "li",
+  "main",
+  "nav",
+  "ol",
+  "p",
+  "section",
+  "summary",
+  "table",
+  "tbody",
+  "td",
+  "tfoot",
+  "th",
+  "thead",
+  "tr",
+  "ul",
+  "option",
+  "optgroup",
+  "select",
+]);
 
 /**
  * If the element opened at toks[k] contains only text and inline tags, returns its
@@ -2508,9 +2983,15 @@ function inlineContent(toks, k) {
   let inner = "";
   for (let j = k; j < toks.length && j < k + 200; j++) {
     const t = toks[j];
-    if (t.type === "comment" || t.type === "raw" || t.type === "doctype") return null;
-    if (j > k && (t.type === "open" || t.type === "close") && HTML_BLOCK.has(t.name)) {
-      if (!(t.type === "close" && depth === 1 && t.name === toks[k].name)) return null;
+    if (t.type === "comment" || t.type === "raw" || t.type === "doctype")
+      return null;
+    if (
+      j > k &&
+      (t.type === "open" || t.type === "close") &&
+      HTML_BLOCK.has(t.name)
+    ) {
+      if (!(t.type === "close" && depth === 1 && t.name === toks[k].name))
+        return null;
     }
     if (t.type === "open" && !t.selfClosing) depth++;
     if (t.type === "close") depth--;
@@ -2518,7 +2999,8 @@ function inlineContent(toks, k) {
       if (t.type !== "close" || t.name !== toks[k].name) return null;
       return { inner: inner.trim(), close: t.value, end: j };
     }
-    if (j > k) inner += t.type === "text" ? t.value.replace(/\s+/g, " ") : t.value;
+    if (j > k)
+      inner += t.type === "text" ? t.value.replace(/\s+/g, " ") : t.value;
   }
   return null;
 }
@@ -2543,7 +3025,8 @@ function formatHtml(src, unit = "  ") {
       }
       const raw = toks[k + 1]?.type === "raw" ? toks[k + 1] : null;
       const closeIdx = raw ? k + 2 : -1;
-      const closeTok = raw && toks[closeIdx]?.type === "close" ? toks[closeIdx] : null;
+      const closeTok =
+        raw && toks[closeIdx]?.type === "close" ? toks[closeIdx] : null;
       if (raw && HTML_PRESERVE.has(t.name)) {
         push(t.rawTag + raw.value + (closeTok ? closeTok.rawTag : ""));
         k = closeTok ? closeIdx : k + 1;
@@ -2558,7 +3041,10 @@ function formatHtml(src, unit = "  ") {
         const inline = inlineContent(toks, k);
         if (inline) {
           const one = t.value + inline.inner + inline.close;
-          if (one.length + unit.length * indent <= HTML_INLINE_MAX || !inline.inner) {
+          if (
+            one.length + unit.length * indent <= HTML_INLINE_MAX ||
+            !inline.inner
+          ) {
             push(one);
           } else {
             // Too long for one line: keep the inline run intact on its own indented line.
@@ -2574,8 +3060,17 @@ function formatHtml(src, unit = "  ") {
       indent++;
     } else if (t.type === "raw") {
       const tag = toks[k - 1]?.rawTag ?? "";
-      const isJs = !/\btype\s*=/i.test(tag) || /\btype\s*=\s*["']?(text\/javascript|module|application\/(x-)?javascript)/i.test(tag);
-      const body = t.name === "style" ? formatCss(t.value, unit) : isJs ? formatJs(t.value, unit) : t.value.trim();
+      const isJs =
+        !/\btype\s*=/i.test(tag) ||
+        /\btype\s*=\s*["']?(text\/javascript|module|application\/(x-)?javascript)/i.test(
+          tag,
+        );
+      const body =
+        t.name === "style"
+          ? formatCss(t.value, unit)
+          : isJs
+            ? formatJs(t.value, unit)
+            : t.value.trim();
       for (const l of body.split("\n")) push(l);
     } else if (t.type === "close") {
       indent = Math.max(0, indent - 1);
@@ -2603,7 +3098,12 @@ function CodeBeautifier({ notify }) {
   const [formattedFrom, setFormattedFrom] = useState(null);
   const [copied, flashCopied] = useFlash();
 
-  const stale = output && formattedFrom && (formattedFrom.code !== code || formattedFrom.language !== language || formattedFrom.indentSize !== indentSize);
+  const stale =
+    output &&
+    formattedFrom &&
+    (formattedFrom.code !== code ||
+      formattedFrom.language !== language ||
+      formattedFrom.indentSize !== indentSize);
 
   const handleBeautify = () => {
     if (!code.trim()) {
@@ -2614,7 +3114,10 @@ function CodeBeautifier({ notify }) {
       setOutput(FORMATTERS[language](code, INDENT_UNITS[indentSize]));
       setFormattedFrom({ code, language, indentSize });
     } catch {
-      notify("Couldn't format this input — check the language profile", "error");
+      notify(
+        "Couldn't format this input — check the language profile",
+        "error",
+      );
     }
   };
 
@@ -2631,43 +3134,110 @@ function CodeBeautifier({ notify }) {
 
   return (
     <section aria-labelledby="beautify-title">
-      <h1 id="beautify-title" style={S.h1}>Code Beautifier &amp; Formatter</h1>
+      <h1 id="beautify-title" style={S.h1}>
+        Code Beautifier &amp; Formatter
+      </h1>
       <p style={S.lead}>
-        Turn minified or messy HTML, CSS and JavaScript into clean, consistently indented code. Strings, comments,
-        regexes and <code style={{ fontFamily: MONO }}>{"<pre>"}</code> blocks are left untouched.
+        Turn minified or messy HTML, CSS and JavaScript into clean, consistently
+        indented code. Strings, comments, regexes and{" "}
+        <code style={{ fontFamily: MONO }}>{"<pre>"}</code> blocks are left
+        untouched.
       </p>
 
-      <div style={{ ...S.card, marginBottom: 20, display: "flex", flexWrap: "wrap", alignItems: "flex-end", gap: 16 }}>
+      <div
+        style={{
+          ...S.card,
+          marginBottom: 20,
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "flex-end",
+          gap: 16,
+        }}
+      >
         <div style={{ minWidth: 180 }}>
-          <label htmlFor="beautify-lang" style={S.label}>Language profile</label>
-          <select id="beautify-lang" value={language} onChange={(e) => setLanguage(e.target.value)} style={S.select}>
+          <label htmlFor="beautify-lang" style={S.label}>
+            Language profile
+          </label>
+          <select
+            id="beautify-lang"
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            style={S.select}
+          >
             <option value="html">HTML</option>
             <option value="css">CSS</option>
             <option value="js">JavaScript</option>
           </select>
         </div>
         <div style={{ minWidth: 140 }}>
-          <label htmlFor="beautify-indent" style={S.label}>Indentation</label>
-          <select id="beautify-indent" value={indentSize} onChange={(e) => setIndentSize(e.target.value)} style={S.select}>
+          <label htmlFor="beautify-indent" style={S.label}>
+            Indentation
+          </label>
+          <select
+            id="beautify-indent"
+            value={indentSize}
+            onChange={(e) => setIndentSize(e.target.value)}
+            style={S.select}
+          >
             <option value="2">2 spaces</option>
             <option value="4">4 spaces</option>
             <option value="tab">Tabs</option>
           </select>
         </div>
-        <button type="button" className="btn-primary" style={{ ...S.btn("primary"), padding: "11px 22px", fontSize: 15 }} onClick={handleBeautify}>
+        <button
+          type="button"
+          className="btn-primary"
+          style={{ ...S.btn("primary"), padding: "11px 22px", fontSize: 15 }}
+          onClick={handleBeautify}
+        >
           💅 Beautify Code
         </button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 20 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
+          gap: 20,
+        }}
+      >
         <div style={{ ...S.card, minWidth: 0 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 8, flexWrap: "wrap" }}>
-            <label htmlFor="beautify-input" style={{ ...S.label, marginBottom: 0 }}>Paste Raw/Minified Code</label>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 8,
+              gap: 8,
+              flexWrap: "wrap",
+            }}
+          >
+            <label
+              htmlFor="beautify-input"
+              style={{ ...S.label, marginBottom: 0 }}
+            >
+              Paste Raw/Minified Code
+            </label>
             <div style={{ display: "flex", gap: 6 }}>
-              <button type="button" className="btn-ghost" style={smallBtn} onClick={() => setCode(SAMPLE_CODE[language])}>
+              <button
+                type="button"
+                className="btn-ghost"
+                style={smallBtn}
+                onClick={() => setCode(SAMPLE_CODE[language])}
+              >
                 Load sample
               </button>
-              <button type="button" className="btn-ghost" style={smallBtn} onClick={() => { setCode(""); setOutput(""); setFormattedFrom(null); }} disabled={!code && !output}>
+              <button
+                type="button"
+                className="btn-ghost"
+                style={smallBtn}
+                onClick={() => {
+                  setCode("");
+                  setOutput("");
+                  setFormattedFrom(null);
+                }}
+                disabled={!code && !output}
+              >
                 Clear
               </button>
             </div>
@@ -2683,7 +3253,13 @@ function CodeBeautifier({ notify }) {
               }
             }}
             spellCheck={false}
-            placeholder={language === "html" ? "<div><p>Hello</p></div>" : language === "css" ? ".a{color:red;margin:0}" : "function f(a){return a*2}"}
+            placeholder={
+              language === "html"
+                ? "<div><p>Hello</p></div>"
+                : language === "css"
+                  ? ".a{color:red;margin:0}"
+                  : "function f(a){return a*2}"
+            }
             style={{
               width: "100%",
               height: 440,
@@ -2703,15 +3279,44 @@ function CodeBeautifier({ notify }) {
             }}
           />
           <p style={{ margin: "8px 0 0", fontSize: 12, color: C.faint }}>
-            Tip: Ctrl + Enter beautifies. JSX and TypeScript-specific syntax aren't supported.
+            Tip: Ctrl + Enter beautifies. JSX and TypeScript-specific syntax
+            aren't supported.
           </p>
         </div>
 
-        <div style={{ ...S.card, minWidth: 0, display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 8, flexWrap: "wrap" }}>
-            <span style={{ ...S.label, marginBottom: 0 }}>Beautified output</span>
-            <span style={{ fontSize: 12, fontFamily: MONO, color: stale ? C.amber : C.faint }}>
-              {stale ? "input changed — beautify again" : output ? `${output.split("\n").length} lines` : "idle"}
+        <div
+          style={{
+            ...S.card,
+            minWidth: 0,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 8,
+              gap: 8,
+              flexWrap: "wrap",
+            }}
+          >
+            <span style={{ ...S.label, marginBottom: 0 }}>
+              Beautified output
+            </span>
+            <span
+              style={{
+                fontSize: 12,
+                fontFamily: MONO,
+                color: stale ? C.amber : C.faint,
+              }}
+            >
+              {stale
+                ? "input changed — beautify again"
+                : output
+                  ? `${output.split("\n").length} lines`
+                  : "idle"}
             </span>
           </div>
           <pre
@@ -2739,7 +3344,13 @@ function CodeBeautifier({ notify }) {
             {output || "// Beautified code will appear here"}
           </pre>
           <div style={{ marginTop: 14 }}>
-            <button type="button" className={copied ? "btn-success" : "btn-primary"} style={S.btn(copied ? "success" : "primary")} onClick={handleCopy} disabled={!output}>
+            <button
+              type="button"
+              className={copied ? "btn-success" : "btn-primary"}
+              style={S.btn(copied ? "success" : "primary")}
+              onClick={handleCopy}
+              disabled={!output}
+            >
               {copied ? "✓ Copied!" : "📋 Copy Beautified Code"}
             </button>
           </div>
@@ -2761,14 +3372,26 @@ function escapeForJson(input, { quotes, asciiOnly }) {
   // JSON.stringify handles \\, ", control characters (\\n, \\t, \\r, \\b, \\f, \\u0000–\\u001f) per the JSON spec.
   let s = JSON.stringify(input);
   if (asciiOnly) {
-    s = s.replace(/[\u007f-\uffff]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`);
+    s = s.replace(
+      /[\u007f-\uffff]/g,
+      (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`,
+    );
   }
   return quotes ? s : s.slice(1, -1);
 }
 
 // Only the escapes JSON defines. Anything else (e.g. "\p" in an unescaped Windows path
 // like C:\projects) is kept verbatim rather than silently losing its backslash.
-const JSON_ESCAPES = { n: "\n", r: "\r", t: "\t", b: "\b", f: "\f", '"': '"', "\\": "\\", "/": "/" };
+const JSON_ESCAPES = {
+  n: "\n",
+  r: "\r",
+  t: "\t",
+  b: "\b",
+  f: "\f",
+  '"': '"',
+  "\\": "\\",
+  "/": "/",
+};
 
 /**
  * Strict JSON.parse first; if the input isn't a valid JSON string body (e.g. it
@@ -2776,7 +3399,8 @@ const JSON_ESCAPES = { n: "\n", r: "\r", t: "\t", b: "\b", f: "\f", '"': '"', "\
  */
 function unescapeJsonString(input) {
   const trimmed = input.trim();
-  const quoted = trimmed.length >= 2 && trimmed.startsWith('"') && trimmed.endsWith('"');
+  const quoted =
+    trimmed.length >= 2 && trimmed.startsWith('"') && trimmed.endsWith('"');
   const body = quoted ? trimmed.slice(1, -1) : input;
   try {
     return { value: JSON.parse(`"${body}"`), strict: true };
@@ -2804,7 +3428,12 @@ function StringEscaper({ notify }) {
       return;
     }
     if (mode === "escape") {
-      setResult({ mode, value: escapeForJson(input, { quotes, asciiOnly }), from: input, strict: true });
+      setResult({
+        mode,
+        value: escapeForJson(input, { quotes, asciiOnly }),
+        from: input,
+        strict: true,
+      });
     } else {
       const { value, strict } = unescapeJsonString(input);
       setResult({ mode, value, from: input, strict });
@@ -2824,21 +3453,51 @@ function StringEscaper({ notify }) {
 
   return (
     <section aria-labelledby="escape-title">
-      <h1 id="escape-title" style={S.h1}>String to JSON Escaper / Unescaper</h1>
+      <h1 id="escape-title" style={S.h1}>
+        String to JSON Escaper / Unescaper
+      </h1>
       <p style={S.lead}>
-        Turn multi-line text, HTML or logs into a single-line string that's safe inside a JSON value — or decode an
-        escaped string back to readable text. Nothing leaves your browser.
+        Turn multi-line text, HTML or logs into a single-line string that's safe
+        inside a JSON value — or decode an escaped string back to readable text.
+        Nothing leaves your browser.
       </p>
 
       <div style={S.card}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 8, flexWrap: "wrap" }}>
-          <label htmlFor="escape-input" style={{ ...S.label, marginBottom: 0 }}>Input String Asset Workspace</label>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 8,
+            gap: 8,
+            flexWrap: "wrap",
+          }}
+        >
+          <label htmlFor="escape-input" style={{ ...S.label, marginBottom: 0 }}>
+            Input String Asset Workspace
+          </label>
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            <span style={{ fontSize: 12, color: C.faint, fontFamily: MONO }}>{input.length.toLocaleString()} chars</span>
-            <button type="button" className="btn-ghost" style={{ ...S.btn("ghost"), padding: "5px 10px", fontSize: 12 }} onClick={() => setInput(SAMPLE_RAW_STRING)}>
+            <span style={{ fontSize: 12, color: C.faint, fontFamily: MONO }}>
+              {input.length.toLocaleString()} chars
+            </span>
+            <button
+              type="button"
+              className="btn-ghost"
+              style={{ ...S.btn("ghost"), padding: "5px 10px", fontSize: 12 }}
+              onClick={() => setInput(SAMPLE_RAW_STRING)}
+            >
               Load sample
             </button>
-            <button type="button" className="btn-ghost" style={{ ...S.btn("ghost"), padding: "5px 10px", fontSize: 12 }} onClick={() => { setInput(""); setResult(null); }} disabled={!input && !result}>
+            <button
+              type="button"
+              className="btn-ghost"
+              style={{ ...S.btn("ghost"), padding: "5px 10px", fontSize: 12 }}
+              onClick={() => {
+                setInput("");
+                setResult(null);
+              }}
+              disabled={!input && !result}
+            >
               Clear
             </button>
           </div>
@@ -2848,7 +3507,9 @@ function StringEscaper({ notify }) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           spellCheck={false}
-          placeholder={'Paste raw text to escape, or an escaped string like  Line 1\\nLine 2\\t\\"quoted\\"  to unescape'}
+          placeholder={
+            'Paste raw text to escape, or an escaped string like  Line 1\\nLine 2\\t\\"quoted\\"  to unescape'
+          }
           style={{
             width: "100%",
             height: 260,
@@ -2865,38 +3526,153 @@ function StringEscaper({ notify }) {
           }}
         />
 
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, marginTop: 16 }}>
-          <button type="button" className="btn-primary" style={bigBtn} onClick={() => run("escape")}>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: 12,
+            marginTop: 16,
+          }}
+        >
+          <button
+            type="button"
+            className="btn-primary"
+            style={bigBtn}
+            onClick={() => run("escape")}
+          >
             🔒 Escape String for JSON
           </button>
-          <button type="button" className="btn-success" style={{ ...bigBtn, ...S.btn("success"), padding: "12px 20px", fontSize: 15 }} onClick={() => run("unescape")}>
+          <button
+            type="button"
+            className="btn-success"
+            style={{
+              ...bigBtn,
+              ...S.btn("success"),
+              padding: "12px 20px",
+              fontSize: 15,
+            }}
+            onClick={() => run("unescape")}
+          >
             🔓 Unescape Back to Raw Text
           </button>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "10px 20px", marginLeft: "auto" }}>
-            <Checkbox checked={quotes} onChange={setQuotes}>Wrap in quotes</Checkbox>
-            <Checkbox checked={asciiOnly} onChange={setAsciiOnly}>Escape non-ASCII (\uXXXX)</Checkbox>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "10px 20px",
+              marginLeft: "auto",
+            }}
+          >
+            <Checkbox checked={quotes} onChange={setQuotes}>
+              Wrap in quotes
+            </Checkbox>
+            <Checkbox checked={asciiOnly} onChange={setAsciiOnly}>
+              Escape non-ASCII (\uXXXX)
+            </Checkbox>
           </div>
         </div>
       </div>
 
       {result && (
-        <div style={{ ...S.card, marginTop: 20, borderColor: stale ? C.amber : result.mode === "escape" ? tint(C.blue, 45) : tint(C.green, 45) }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
-            <span style={{ ...S.label, marginBottom: 0, color: result.mode === "escape" ? C.blue : C.green }}>
-              {result.mode === "escape" ? "🔒 Escaped JSON string" : "🔓 Unescaped raw text"}
+        <div
+          style={{
+            ...S.card,
+            marginTop: 20,
+            borderColor: stale
+              ? C.amber
+              : result.mode === "escape"
+                ? tint(C.blue, 45)
+                : tint(C.green, 45),
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 10,
+              flexWrap: "wrap",
+              marginBottom: 10,
+            }}
+          >
+            <span
+              style={{
+                ...S.label,
+                marginBottom: 0,
+                color: result.mode === "escape" ? C.blue : C.green,
+              }}
+            >
+              {result.mode === "escape"
+                ? "🔒 Escaped JSON string"
+                : "🔓 Unescaped raw text"}
             </span>
-            <span style={{ fontSize: 12, fontFamily: MONO, color: stale ? C.amber : C.faint }}>
-              {stale ? "input changed — run again" : `${result.from.length.toLocaleString()} → ${result.value.length.toLocaleString()} chars`}
+            <span
+              style={{
+                fontSize: 12,
+                fontFamily: MONO,
+                color: stale ? C.amber : C.faint,
+              }}
+            >
+              {stale
+                ? "input changed — run again"
+                : `${result.from.length.toLocaleString()} → ${result.value.length.toLocaleString()} chars`}
             </span>
           </div>
 
           {/* Terminal-style result block */}
-          <div style={{ borderRadius: 8, overflow: "hidden", border: `1px solid ${C.borderHi}` }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", background: C.panelHi, borderBottom: `1px solid ${C.border}` }}>
-              <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: "50%", background: "#ef4444" }} />
-              <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: "50%", background: "#eab308" }} />
-              <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: "50%", background: "#22c55e" }} />
-              <span style={{ marginLeft: 8, fontSize: 12, color: C.faint, fontFamily: MONO }}>
+          <div
+            style={{
+              borderRadius: 8,
+              overflow: "hidden",
+              border: `1px solid ${C.borderHi}`,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "8px 12px",
+                background: C.panelHi,
+                borderBottom: `1px solid ${C.border}`,
+              }}
+            >
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: "50%",
+                  background: "#ef4444",
+                }}
+              />
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: "50%",
+                  background: "#eab308",
+                }}
+              />
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: "50%",
+                  background: "#22c55e",
+                }}
+              />
+              <span
+                style={{
+                  marginLeft: 8,
+                  fontSize: 12,
+                  color: C.faint,
+                  fontFamily: MONO,
+                }}
+              >
                 {result.mode === "escape" ? "output.json-string" : "output.txt"}
               </span>
             </div>
@@ -2918,22 +3694,46 @@ function StringEscaper({ notify }) {
                 opacity: stale ? 0.65 : 1,
               }}
             >
-              {result.value || <span style={{ color: C.faint }}>(empty string)</span>}
+              {result.value || (
+                <span style={{ color: C.faint }}>(empty string)</span>
+              )}
             </pre>
           </div>
 
           {!result.strict && (
             <p style={{ margin: "10px 0 0", fontSize: 12.5, color: C.amber }}>
-              ⚠ The input wasn't a strictly valid JSON string (e.g. it contains raw quotes or line breaks), so escape
-              sequences were decoded leniently.
+              ⚠ The input wasn't a strictly valid JSON string (e.g. it contains
+              raw quotes or line breaks), so escape sequences were decoded
+              leniently.
             </p>
           )}
 
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 14 }}>
-            <button type="button" className={copied ? "btn-success" : "btn-primary"} style={{ ...S.btn(copied ? "success" : "primary"), padding: "12px 22px", fontSize: 15 }} onClick={handleCopy}>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 10,
+              marginTop: 14,
+            }}
+          >
+            <button
+              type="button"
+              className={copied ? "btn-success" : "btn-primary"}
+              style={{
+                ...S.btn(copied ? "success" : "primary"),
+                padding: "12px 22px",
+                fontSize: 15,
+              }}
+              onClick={handleCopy}
+            >
               {copied ? "✓ Copied!" : "📋 Copy Result"}
             </button>
-            <button type="button" className="btn-ghost" style={S.btn("ghost")} onClick={() => setInput(result.value)}>
+            <button
+              type="button"
+              className="btn-ghost"
+              style={S.btn("ghost")}
+              onClick={() => setInput(result.value)}
+            >
               ⇅ Use result as input
             </button>
           </div>
@@ -3017,11 +3817,11 @@ function PrivacyTerms() {
           <strong style={{ color: C.green }}>
             Your tool data never leaves your browser.
           </strong>{" "}
-          Every utility on {SITE_NAME} — including the Cron Scheduler, CSV to JSON Converter, JSON Diff
-          Checker, Code Beautifier and String Escaper — runs entirely client-side in JavaScript. The
-          text, files and settings you enter are processed locally on your
-          device and are never uploaded, transmitted, logged or stored on our
-          servers.
+          Every utility on {SITE_NAME} — including the Cron Scheduler, CSV to
+          JSON Converter, JSON Diff Checker, Code Beautifier and String Escaper
+          — runs entirely client-side in JavaScript. The text, files and
+          settings you enter are processed locally on your device and are never
+          uploaded, transmitted, logged or stored on our servers.
         </p>
       </div>
 
