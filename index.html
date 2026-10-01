@@ -3,11 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cron Expression Generator & CSV to JSON Converter | DevStudio Tools</title>
+    <title>ZenSyntax Studio | Free Online Developer Tools</title>
     <meta
       name="description"
-      content="Free, private developer utilities: a cron expression generator, CSV to JSON converter, JSON diff checker, code beautifier and JSON string escaper. Runs 100% in your browser — no uploads."
+      content="Free browser-based developer tools from ZenSyntax Studio: generate cron schedules, convert CSV to JSON, compare JSON, format HTML/CSS/JavaScript, and escape JSON strings. Your data stays in your browser."
     />
+    <meta name="author" content="ZenSyntax Studio" />
     <meta name="theme-color" content="#09090b" />
     <meta name="color-scheme" content="dark light" />
     <!-- Apply the saved theme (or the OS preference) before first paint to avoid a flash. -->
@@ -24,37 +25,89 @@
       })();
     </script>
     <meta name="robots" content="index, follow" />
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
     <!-- Replace zensyntax.com with the production domain (also SITE_URL in src/App.jsx). -->
     <link rel="canonical" href="https://www.zensyntax.com/" />
     <link rel="icon" type="image/png" href="/favicon.png" />
 
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="DevStudio Tools" />
-    <meta property="og:title" content="DevStudio Tools — Cron Generator & CSV to JSON Converter" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content="ZenSyntax Studio" />
+    <meta property="og:title" content="ZenSyntax Studio | Free Online Developer Tools" />
     <meta
       property="og:description"
-      content="Build cron schedules visually and convert CSV to JSON instantly. Private, offline, client-side developer tools."
+      content="Generate cron schedules, convert CSV to JSON, compare JSON, format code, and escape strings. Free tools that process your data in the browser."
     />
     <meta property="og:url" content="https://www.zensyntax.com/" />
     <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="ZenSyntax Studio | Free Online Developer Tools" />
+    <meta
+      name="twitter:description"
+      content="Generate cron schedules, convert CSV to JSON, compare JSON, format code, and escape strings. Free tools that process your data in the browser."
+    />
 
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "name": "DevStudio Tools",
-        "url": "https://www.zensyntax.com/",
-        "applicationCategory": "DeveloperApplication",
-        "operatingSystem": "Any (web browser)",
-        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-        "featureList": [
-          "Cron expression generator with custom hour and minute intervals",
-          "Human-readable cron interpretation and next run preview",
-          "CSV/TSV to JSON converter with header and type detection",
-          "Side-by-side JSON diff checker with color-coded structural changes",
-          "HTML, CSS and JavaScript code beautifier",
-          "JSON string escape and unescape tool",
-          "100% client-side processing"
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://www.zensyntax.com/#website",
+            "name": "ZenSyntax Studio",
+            "url": "https://www.zensyntax.com/",
+            "inLanguage": "en"
+          },
+          {
+            "@type": "WebApplication",
+            "@id": "https://www.zensyntax.com/#application",
+            "name": "ZenSyntax Studio",
+            "url": "https://www.zensyntax.com/",
+            "description": "Free browser-based developer tools for cron scheduling, data conversion, JSON comparison, code formatting, and string escaping.",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Any (web browser)",
+            "browserRequirements": "Requires JavaScript enabled",
+            "isAccessibleForFree": true,
+            "inLanguage": "en",
+            "isPartOf": { "@id": "https://www.zensyntax.com/#website" },
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "featureList": [
+              "Cron expression generator with human-readable explanations and upcoming run times",
+              "CSV and TSV to JSON converter with header and type detection",
+              "Side-by-side JSON diff checker",
+              "HTML, CSS, and JavaScript code formatter",
+              "JSON string escape and unescape tool",
+              "Client-side data processing"
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "What tools are available in ZenSyntax Studio?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "ZenSyntax Studio includes a cron expression generator, a CSV and TSV to JSON converter, a JSON diff checker, an HTML/CSS/JavaScript formatter, and a JSON string escape and unescape tool."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Is my data uploaded when I use a tool?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. Tool inputs are processed in your browser and are not uploaded to a processing server."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Can I use ZenSyntax Studio for free?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. The developer tools are free to use in a web browser."
+                }
+              }
+            ]
+          }
         ]
       }
     </script>

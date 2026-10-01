@@ -4245,6 +4245,120 @@ function Sidebar({ activeTab, onSelect, theme, onToggleTheme }) {
   );
 }
 
+function SearchContent({ onSelect }) {
+  const tools = TABS.filter((tab) => tab.id !== "privacy");
+
+  return (
+    <section
+      aria-label="About ZenSyntax Studio"
+      style={{
+        marginTop: 48,
+        paddingTop: 28,
+        borderTop: `1px solid ${C.border}`,
+      }}
+    >
+      <h2 style={{ margin: "0 0 10px", color: C.text, fontSize: 20 }}>
+        Free browser-based developer tools
+      </h2>
+      <p style={{ maxWidth: 760, color: C.muted, lineHeight: 1.7 }}>
+        ZenSyntax Studio brings everyday developer utilities together in one
+        place. Generate cron schedules, convert and compare data, format code,
+        and escape strings. Tool inputs are processed in your browser and are
+        not uploaded to a processing server.
+      </p>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
+          gap: "8px 28px",
+          marginTop: 24,
+        }}
+      >
+        {tools.map((tool) => (
+          <article key={tool.id} style={{ padding: "10px 0" }}>
+            <h3 style={{ margin: "0 0 6px", fontSize: 15 }}>
+              <a
+                href={`#${tool.id}`}
+                onClick={(event) => {
+                  event.preventDefault();
+                  onSelect(tool.id);
+                }}
+                style={{ color: C.blue, textUnderlineOffset: 3 }}
+              >
+                {tool.title}
+              </a>
+            </h3>
+            <p
+              style={{
+                margin: 0,
+                color: C.muted,
+                fontSize: 14,
+                lineHeight: 1.6,
+              }}
+            >
+              {tool.description}
+            </p>
+          </article>
+        ))}
+      </div>
+
+      <section aria-labelledby="faq-title" style={{ marginTop: 28 }}>
+        <h2
+          id="faq-title"
+          style={{ margin: "0 0 12px", color: C.text, fontSize: 20 }}
+        >
+          Frequently asked questions
+        </h2>
+        <details
+          style={{ padding: "12px 0", borderTop: `1px solid ${C.border}` }}
+        >
+          <summary
+            style={{ color: C.text, cursor: "pointer", fontWeight: 600 }}
+          >
+            What tools are available in ZenSyntax Studio?
+          </summary>
+          <p style={{ margin: "10px 0 0", color: C.muted, lineHeight: 1.6 }}>
+            ZenSyntax Studio includes a cron expression generator, a CSV and TSV
+            to JSON converter, a JSON diff checker, an HTML/CSS/JavaScript
+            formatter, and a JSON string escape and unescape tool.
+          </p>
+        </details>
+        <details
+          style={{ padding: "12px 0", borderTop: `1px solid ${C.border}` }}
+        >
+          <summary
+            style={{ color: C.text, cursor: "pointer", fontWeight: 600 }}
+          >
+            Is my data uploaded when I use a tool?
+          </summary>
+          <p style={{ margin: "10px 0 0", color: C.muted, lineHeight: 1.6 }}>
+            No. Tool inputs are processed in your browser and are not uploaded
+            to a processing server.
+          </p>
+        </details>
+        <details
+          style={{
+            padding: "12px 0",
+            borderTop: `1px solid ${C.border}`,
+            borderBottom: `1px solid ${C.border}`,
+          }}
+        >
+          <summary
+            style={{ color: C.text, cursor: "pointer", fontWeight: 600 }}
+          >
+            Can I use ZenSyntax Studio for free?
+          </summary>
+          <p style={{ margin: "10px 0 0", color: C.muted, lineHeight: 1.6 }}>
+            Yes. The developer tools are free to use in a web browser.
+          </p>
+        </details>
+      </section>
+    </section>
+  );
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState(tabFromHash);
   const [toast, notify] = useToast();
@@ -4278,13 +4392,23 @@ export default function App() {
   // Per-tool <title> and meta description for SEO and social previews.
   useEffect(() => {
     const tab = TABS.find((t) => t.id === activeTab);
-    document.title = `${tab.title} | ${SITE_NAME}`;
+    const title = `${tab.title} | ${SITE_NAME}`;
+    document.title = title;
     document
       .querySelector('meta[name="description"]')
       ?.setAttribute("content", tab.description);
     document
-      .querySelector('link[rel="canonical"]')
-      ?.setAttribute("href", `${SITE_URL}/#${tab.id}`);
+      .querySelector('meta[property="og:title"]')
+      ?.setAttribute("content", title);
+    document
+      .querySelector('meta[property="og:description"]')
+      ?.setAttribute("content", tab.description);
+    document
+      .querySelector('meta[name="twitter:title"]')
+      ?.setAttribute("content", title);
+    document
+      .querySelector('meta[name="twitter:description"]')
+      ?.setAttribute("content", tab.description);
   }, [activeTab]);
 
   const selectTab = useCallback((id) => {
@@ -4352,6 +4476,7 @@ export default function App() {
           <div hidden={activeTab !== "privacy"}>
             <PrivacyTerms />
           </div>
+          <SearchContent onSelect={selectTab} />
         </div>
 
         {/* Negative inline margins cancel main's side padding so the footer bar spans the full workspace width. */}
