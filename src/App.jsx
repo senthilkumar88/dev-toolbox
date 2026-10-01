@@ -12,11 +12,11 @@ import {
    ========================================================================== */
 const SITE_NAME = "ZenSyntax Studio";
 const SITE_URL = "https://www.zensyntax.com";
-const CONTACT_EMAIL = "privacy@zensyntax.com";
+// const CONTACT_EMAIL = "privacy@zensyntax.com";
 const POLICY_EFFECTIVE_DATE = "September 30, 2026";
 const CURRENT_YEAR = new Date().getFullYear();
 // Swap for your DigitalOcean referral/affiliate URL.
-const PARTNER_URL = "https://www.digitalocean.com/";
+// const PARTNER_URL = "https://www.digitalocean.com/";
 
 const TABS = [
   {
