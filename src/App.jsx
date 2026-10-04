@@ -59,13 +59,6 @@ const TABS = [
     description:
       'Escape multi-line text, HTML or logs into a single-line JSON-safe string, or unescape \\n, \\t, \\" and \\uXXXX sequences back to raw text. Runs entirely in your browser.',
   },
-  {
-    id: "privacy",
-    icon: "🛡️",
-    label: "Privacy Policy & Terms",
-    title: "Privacy Policy & Terms of Use",
-    description: `Privacy Policy and Terms of Use for ${SITE_NAME}, including cookie usage, advertising partners and client-side data processing.`,
-  },
 ];
 const TAB_IDS = TABS.map((t) => t.id);
 const tabFromHash = () => {
@@ -3965,10 +3958,12 @@ function PrivacyTerms() {
 
       <PolicySection title="7. Children's Privacy">
         <p style={p}>
-          This website is not directed at children under the age of 13 (or 16 in
-          the EEA), and we do not knowingly collect personal information from
-          children. If you believe a child has provided personal information
-          through our site, please contact us and we will promptly remove it.
+          ZenSyntax is not intended for children under the age of 13, or under
+          the age of 16 where applicable in the European Economic Area (EEA). We
+          do not knowingly collect personal information from children. If we
+          become aware that personal information from a child has been collected
+          through our website, we will take reasonable steps to delete it
+          promptly.
         </p>
       </PolicySection>
 
