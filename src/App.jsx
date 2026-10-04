@@ -60,7 +60,16 @@ const TABS = [
       'Escape multi-line text, HTML or logs into a single-line JSON-safe string, or unescape \\n, \\t, \\" and \\uXXXX sequences back to raw text. Runs entirely in your browser.',
   },
 ];
-const TAB_IDS = TABS.map((t) => t.id);
+const PAGES = [
+  ...TABS,
+  {
+    id: "privacy",
+    title: "Privacy Policy & Terms of Use",
+    description:
+      "Read the ZenSyntax Studio privacy policy and terms of use, including how browser-based tools handle your data.",
+  },
+];
+const TAB_IDS = PAGES.map((page) => page.id);
 const tabFromHash = () => {
   const id = window.location.hash.replace("#", "");
   return TAB_IDS.includes(id) ? id : "cron";
@@ -4386,7 +4395,7 @@ export default function App() {
 
   // Per-tool <title> and meta description for SEO and social previews.
   useEffect(() => {
-    const tab = TABS.find((t) => t.id === activeTab);
+    const tab = PAGES.find((page) => page.id === activeTab);
     const title = `${tab.title} | ${SITE_NAME}`;
     document.title = title;
     document
